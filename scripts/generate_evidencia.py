@@ -198,13 +198,14 @@ def get_media_block(caso):
         return ""
 
     # URL de Cloudinary disponible
-    if ext in (".png", ".jpg"):
-        return f"""<img src="{url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
-    <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
-    elif ext == ".pdf":
+    if ext == ".pdf":
+        url = url.replace("/image/upload/", "/raw/upload/")
         return f"""<a href="{url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
       -> DESCARGAR PDF ORIGINAL
     </a>"""
+    elif ext in (".png", ".jpg"):
+        return f"""<img src="{url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
+    <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
     elif ext == ".mp4":
         return f"""<video controls style="width:100%; border:1px solid #4e4636;">
       <source src="{url}" type="video/mp4"/>
@@ -271,17 +272,21 @@ def generate_page(caso, index, used_slugs):
     explicacion_html = md_to_html(caso.get("explicacion", ""))
     anomalia_html = md_to_html(caso.get("anomalia", ""))
 
-    # Imagen
-    img_path = get_image_for_case(caso)
+    # Archivo fuente desde Cloudinary
+    media_block = get_media_block(caso)
+
+    # Imagen local: solo si no hay media_block con imagen Cloudinary
+    fname = caso["filename"]
+    ext = Path(fname).suffix.lower()
+    has_cloudinary_img = ext in (".png", ".jpg") and fname in _cloudinary_urls
     image_html = ""
-    if img_path:
-        image_html = f"""
+    if not has_cloudinary_img:
+        img_path = get_image_for_case(caso)
+        if img_path:
+            image_html = f"""
     <div class="mb-8 border border-outline-variant">
       <img src="/{img_path}" alt="{title_attr}" class="w-full" style="border-radius: 0px;"/>
     </div>"""
-
-    # Archivo fuente desde Cloudinary
-    media_block = get_media_block(caso)
     if media_block:
         media_block = f"""
     <div class="mb-8 p-6 border border-outline-variant bg-surface-container-lowest">
