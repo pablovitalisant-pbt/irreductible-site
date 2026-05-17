@@ -11,6 +11,7 @@ from pathlib import Path
 # Rutas
 EXTRACTIONS_DIR = Path(r"C:\Users\pablo\Documents\libro-uap\LeadMagnet\uap-leadmagnet\output\extractions")
 OUTPUT_DIR = Path("evidencia")
+ASSETS_DIR = Path("assets/evidencia")
 
 def slugify(filename):
     """Convierte nombre de archivo a slug URL-friendly."""
@@ -19,6 +20,38 @@ def slugify(filename):
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
     return slug
+
+def get_image_for_md(md_path):
+    """Busca imagen asociada al archivo .md en assets/evidencia/."""
+    stem = md_path.name.replace(".md", "")
+    # Normalizar: reemplazar _ext -> .ext
+    for sep, real_ext in [("_png", ".png"), ("_pdf", ".pdf"), ("_jpg", ".jpg"), ("_mp4", ".mp4")]:
+        if stem.endswith(sep):
+            original = stem[:-len(sep)] + real_ext
+            break
+    else:
+        original = stem
+
+    # Buscar imagen: PDF -> PNG, otros -> mismo nombre
+    if original.endswith(".pdf"):
+        img_name = original[:-4] + ".png"
+    else:
+        img_name = original
+
+    img_path = ASSETS_DIR / img_name
+    if img_path.exists():
+        return f"assets/evidencia/{img_name}"
+    return None
+
+def get_caption(md_path, content):
+    """Extrae la fuente del .md para usar como caption en NASA-UAP-VM."""
+    name = md_path.name.replace(".md", "")
+    if "NASA-UAP-VM" not in name:
+        return None
+    for line in content.split("\n"):
+        if line.startswith("**Fuente:**"):
+            return line.replace("**Fuente:**", "").strip()
+    return None
 
 def md_to_html(content):
     """Convierte markdown basico a HTML."""
@@ -68,9 +101,24 @@ def generate_page(md_path, used_slugs):
     used_slugs.add(slug)
     output_path = OUTPUT_DIR / f"{slug}.html"
     
+    # Buscar imagen asociada
+    image_html = ""
+    img_path = get_image_for_md(md_path)
+    if img_path:
+        caption = get_caption(md_path, content)
+        caption_html = ""
+        if caption:
+            caption_html = f'\n      <p class="font-metadata text-metadata text-on-surface-variant uppercase mt-3">{caption}</p>'
+        image_html = f'''
+    <!-- IMAGEN DEL DOCUMENTO FUENTE -->
+    <section class="max-w-4xl mx-auto px-8 pt-8">
+      <img src="/{img_path}" alt="{title}" class="w-full border border-[#4e4636]" style="border-radius: 0px;"/>
+{caption_html}
+    </section>'''
+
     # Renderizar contenido
     body_content = md_to_html(content)
-    
+
     html = f"""<!DOCTYPE html>
 <html class="dark" lang="es">
 <head>
@@ -162,6 +210,7 @@ tailwind.config = {{
   <h1 class="font-headline-lg text-headline-lg text-on-background uppercase mb-4">{title}</h1>
   <code class="font-metadata text-metadata text-primary bg-surface-container-low px-3 py-2 block break-all">{md_path.stem}</code>
 </header>
+{image_html}
 
 <!-- CONTENIDO -->
 <main class="max-w-4xl mx-auto px-8 py-12">
