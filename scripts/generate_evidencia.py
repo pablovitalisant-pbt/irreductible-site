@@ -179,24 +179,22 @@ def get_media_block(caso):
     url = _cloudinary_urls.get(fname)
 
     if not url:
-        # Fallback: WAR.GOV
-        fallback_url = f"https://www.archives.gov/files/uap/{fname}"
-        label = f'<p class="font-metadata text-metadata-sm text-on-surface-variant uppercase mb-2">FUENTE: WAR.GOV</p>'
+        # Fallback: WAR.GOV/UFO
+        stem = Path(fname).stem
+        slug = stem.replace(" ", "-")
+        fallback_url = f"https://www.war.gov/UFO/#{slug}"
+        label = '<p class="font-metadata text-metadata-sm text-on-surface-variant uppercase mb-2">FUENTE: WAR.GOV/UFO</p>'
         if ext in (".png", ".jpg"):
             return f"""{label}
-    <img src="{fallback_url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
-    <a href="{fallback_url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
+    <a href="{fallback_url}" target="_blank" class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
         elif ext == ".pdf":
             return f"""{label}
-    <a href="{fallback_url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
+    <a href="{fallback_url}" target="_blank" style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
       -> DESCARGAR PDF ORIGINAL
     </a>"""
         elif ext == ".mp4":
             return f"""{label}
-    <video controls style="width:100%; border:1px solid #4e4636;">
-      <source src="{fallback_url}" type="video/mp4"/>
-    </video>
-    <a href="{fallback_url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
+    <a href="{fallback_url}" target="_blank" class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
         return ""
 
     # URL de Cloudinary disponible
