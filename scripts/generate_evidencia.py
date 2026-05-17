@@ -4,12 +4,19 @@ Genera paginas HTML en evidencia/ desde output/analysis.md.
 Ejecutar desde la raiz del proyecto: python scripts/generate_evidencia.py
 """
 
+import json
 import re
 from pathlib import Path
 
 ANALYSIS_PATH = Path(r"C:\Users\pablo\Documents\libro-uap\LeadMagnet\uap-leadmagnet\output\analysis.md")
 OUTPUT_DIR = Path("evidencia")
 ASSETS_DIR = Path("assets/evidencia")
+CLOUDINARY_JSON = Path("scripts/cloudinary_urls.json")
+
+# Cargar URLs de Cloudinary
+_cloudinary_urls = {}
+if CLOUDINARY_JSON.exists():
+    _cloudinary_urls = json.loads(CLOUDINARY_JSON.read_text(encoding="utf-8"))
 
 # --- Parseo ---
 
@@ -165,6 +172,48 @@ def get_image_for_case(caso):
             return f"assets/evidencia/{stem}{ext}"
     return None
 
+def get_media_block(caso):
+    """Genera bloque HTML con archivo fuente desde Cloudinary."""
+    fname = caso["filename"]
+    ext = Path(fname).suffix.lower()
+    url = _cloudinary_urls.get(fname)
+
+    if not url:
+        # Fallback: WAR.GOV
+        fallback_url = f"https://www.archives.gov/files/uap/{fname}"
+        label = f'<p class="font-metadata text-metadata-sm text-on-surface-variant uppercase mb-2">FUENTE: WAR.GOV</p>'
+        if ext in (".png", ".jpg"):
+            return f"""{label}
+    <img src="{fallback_url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
+    <a href="{fallback_url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
+        elif ext == ".pdf":
+            return f"""{label}
+    <a href="{fallback_url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
+      -> DESCARGAR PDF ORIGINAL
+    </a>"""
+        elif ext == ".mp4":
+            return f"""{label}
+    <video controls style="width:100%; border:1px solid #4e4636;">
+      <source src="{fallback_url}" type="video/mp4"/>
+    </video>
+    <a href="{fallback_url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
+        return ""
+
+    # URL de Cloudinary disponible
+    if ext in (".png", ".jpg"):
+        return f"""<img src="{url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
+    <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
+    elif ext == ".pdf":
+        return f"""<a href="{url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
+      -> DESCARGAR PDF ORIGINAL
+    </a>"""
+    elif ext == ".mp4":
+        return f"""<video controls style="width:100%; border:1px solid #4e4636;">
+      <source src="{url}" type="video/mp4"/>
+    </video>
+    <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
+    return ""
+
 def score_bar(score):
     """Genera barra visual de score con bloques Unicode."""
     filled = "█" * score
@@ -231,6 +280,14 @@ def generate_page(caso, index, used_slugs):
         image_html = f"""
     <div class="mb-8 border border-outline-variant">
       <img src="/{img_path}" alt="{title_attr}" class="w-full" style="border-radius: 0px;"/>
+    </div>"""
+
+    # Archivo fuente desde Cloudinary
+    media_block = get_media_block(caso)
+    if media_block:
+        media_block = f"""
+    <div class="mb-8 p-6 border border-outline-variant bg-surface-container-lowest">
+{media_block}
     </div>"""
 
     # Bloque CTA (usado 2 veces)
@@ -379,6 +436,7 @@ tailwind.config = {{
     </div>
   </div>
 {image_html}
+{media_block}
   <div class="space-y-8">
     <div class="relative p-6 border border-outline-variant bg-surface-container-lowest">
       <div class="corner-bracket bracket-tl"></div>
