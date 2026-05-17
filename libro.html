@@ -1,1 +1,739 @@
-<!-- Reemplazar con el contenido de landing_libro/code.html -->
+<!DOCTYPE html>
+<html class="dark" lang="es" style="overflow-x: hidden">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IRREDUCTIBLE | Pablo Bravo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Outfit:wght@300;400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "error-container": "#93000a",
+                    "inverse-surface": "#e5e2e1",
+                    "surface": "#131313",
+                    "tertiary-fixed": "#dfe2eb",
+                    "outline": "#9a907d",
+                    "tertiary": "#c3c6cf",
+                    "secondary-fixed": "#cae6ff",
+                    "on-secondary-container": "#87bbe4",
+                    "inverse-on-surface": "#313030",
+                    "secondary-fixed-dim": "#98ccf6",
+                    "on-tertiary-fixed": "#181c22",
+                    "surface-variant": "#353534",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-error": "#690005",
+                    "on-surface": "#e5e2e1",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-high": "#2a2a2a",
+                    "on-secondary": "#00344e",
+                    "tertiary-container": "#94979f",
+                    "primary": "#b8922a",
+                    "on-tertiary-fixed-variant": "#43474e",
+                    "surface-tint": "#b8922a",
+                    "on-secondary-fixed-variant": "#064b6f",
+                    "outline-variant": "#4e4636",
+                    "on-surface-variant": "#d1c5b0",
+                    "background": "#131313",
+                    "surface-container-low": "#1c1b1b",
+                    "on-primary": "#3e2e00",
+                    "on-tertiary-container": "#2c3036",
+                    "primary-container": "#b8922a",
+                    "on-primary-fixed": "#251a00",
+                    "inverse-primary": "#775a00",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#353534",
+                    "on-secondary-fixed": "#001e30",
+                    "on-background": "#e5e2e1",
+                    "secondary-container": "#064b6f",
+                    "on-tertiary": "#2d3137",
+                    "surface-container": "#201f1f",
+                    "on-primary-container": "#3d2d00",
+                    "primary-fixed-dim": "#b8922a",
+                    "surface-dim": "#131313",
+                    "surface-bright": "#3a3939",
+                    "on-primary-fixed-variant": "#5a4400",
+                    "tertiary-fixed-dim": "#c3c6cf",
+                    "secondary": "#98ccf6",
+                    "primary-fixed": "#ffdf97",
+                    "steel-blue": "#4a7fa5"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0",
+                    "lg": "0",
+                    "xl": "0",
+                    "full": "0"
+                },
+                "spacing": {
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "margin-desktop": "64px",
+                    "margin-mobile": "20px",
+                    "container-max": "1280px"
+                },
+                "fontFamily": {
+                    "headline-lg": ["Bebas Neue"],
+                    "headline-lg-mobile": ["Bebas Neue"],
+                    "display-lg": ["Bebas Neue"],
+                    "data-mono": ["JetBrains Mono"],
+                    "label-caps": ["JetBrains Mono"],
+                    "headline-md": ["Bebas Neue"],
+                    "body-lg": ["Outfit"],
+                    "body-md": ["Outfit"]
+                },
+                "fontSize": {
+                    "headline-lg": ["64px", {"lineHeight": "100%", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["48px", {"lineHeight": "100%", "fontWeight": "400"}],
+                    "display-lg": ["96px", {"lineHeight": "90%", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "140%", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "120%", "letterSpacing": "0.15em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "110%", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "160%", "fontWeight": "400"}],
+                    "body-md": ["18px", {"lineHeight": "160%", "fontWeight": "400"}]
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body {
+        background-color: #0a0a0a;
+        color: #e5e2e1;
+        -webkit-font-smoothing: antialiased;
+    }
+    .font-body-md, li, span:not(.font-data-mono):not(.font-label-caps):not(.font-headline-md):not(.font-display-lg) {
+        font-size: 18px;
+        line-height: 1.7;
+    }
+    /* HUD brackets — 32px */
+    .hud-bracket-tl {
+        border-top: 2px solid #4a7fa5;
+        border-left: 2px solid #4a7fa5;
+        width: 32px; height: 32px;
+        position: absolute; top: 0; left: 0;
+    }
+    .hud-bracket-tr {
+        border-top: 2px solid #4a7fa5;
+        border-right: 2px solid #4a7fa5;
+        width: 32px; height: 32px;
+        position: absolute; top: 0; right: 0;
+    }
+    .hud-bracket-bl {
+        border-bottom: 2px solid #4a7fa5;
+        border-left: 2px solid #4a7fa5;
+        width: 32px; height: 32px;
+        position: absolute; bottom: 0; left: 0;
+    }
+    .hud-bracket-br {
+        border-bottom: 2px solid #4a7fa5;
+        border-right: 2px solid #4a7fa5;
+        width: 32px; height: 32px;
+        position: absolute; bottom: 0; right: 0;
+    }
+    /* Grain overlay */
+    .grain-overlay {
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuATsriVY5ea8IPBfKEX9mv7EKoysoL4WmHlLz7ZEgDGvYf9iOoCL4dOi8xBh5CV_4dtTu7Xau6egSdvy8beQsF86gIAXoRUsN2v-G8rq_iXAMbLH47R-dZtF5nOZELNLdswdXOXWGV7g2THhg-IXcPdXaUPPzgPiMfK3JQt96IRdfQAojBZfeg3WO2dxYVumkpYlld_kFRgYEdz-NKXxTvOJJDaM9wcOU065SsXWFKaaGL6N0SMjH6-IQ_lpwgZ3kS-ipokEy6kbt4);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9999;
+    }
+    /* Section reveal */
+    .section-reveal {
+        opacity: 0;
+        transform: translateY(5px);
+        transition: opacity 600ms ease-out, transform 600ms ease-out;
+    }
+    .section-reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    /* Stagger children */
+    .stagger-child {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 500ms ease-out, transform 500ms ease-out;
+    }
+    .is-visible .stagger-child {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    /* Stagger lists */
+    .stagger-list li {
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: opacity 400ms ease-out, transform 400ms ease-out;
+    }
+    .is-visible .stagger-list li {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    /* CTA scan line */
+    @keyframes scan-line {
+        0% { left: -80px; }
+        100% { left: calc(100% + 80px); }
+    }
+    .cta-scan {
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-scan::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -80px;
+        width: 80px;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        pointer-events: none;
+    }
+    .cta-scan:hover::after {
+        animation: scan-line 600ms ease-in-out forwards;
+    }
+    .cta-scan:hover {
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+    /* Ghost date */
+    .ghost-date {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(80px, 15vw, 160px);
+        color: #1c1c1c;
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+    }
+    /* Nimitz brackets */
+    .hud-bracket-nimitz {
+        opacity: 0;
+        transition: opacity 500ms ease-out;
+    }
+    .hud-bracket-nimitz.is-visible {
+        opacity: 1;
+    }
+    /* Text wrapping */
+    h2, h3 {
+        text-wrap: balance;
+    }
+    /* Border-technical */
+    .border-technical {
+        border: 1px solid rgba(74, 127, 165, 0.25);
+    }
+</style>
+</head>
+<body class="font-body-md text-on-surface">
+<div class="grain-overlay"></div>
+
+<!-- NAVIGATION -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4">
+    <div class="font-headline-md text-headline-md tracking-widest text-on-surface">IRREDUCTIBLE</div>
+    <div class="hidden md:flex gap-8 items-center">
+        <button class="bg-primary text-on-primary px-6 py-2 font-label-caps text-label-caps tracking-widest hover:brightness-110 transition-all active:scale-95">OBTENER EL LIBRO</button>
+    </div>
+</header>
+
+<main class="pt-24">
+
+<!-- SECTION 1: HERO — pt-32 pb-0 -->
+<section class="section-reveal pt-16 pb-0 px-margin-mobile md:px-margin-desktop relative overflow-hidden">
+    <div class="absolute top-10 left-10 opacity-20 font-data-mono text-[10px] space-y-1 hidden lg:block">
+        <div>REF_ID: IRREDUCTIBLE_001</div>
+        <div>COORD: 34.0522° N, 118.2437° W</div>
+        <div>STATUS: CLASSIFIED_EYES_ONLY</div>
+    </div>
+    <div class="flex flex-col md:flex-row gap-12">
+        <!-- Text column: 55%, left-anchored -->
+        <div class="w-full md:w-[55%] order-2 md:order-1 space-y-8">
+            <h1 class="font-headline-lg-mobile md:font-headline-lg text-on-surface uppercase" style="font-size:clamp(64px,12vw,140px);letter-spacing:0.02em;font-family:'Bebas Neue',sans-serif;line-height:0.9;">IRREDUCTIBLE</h1>
+            <div class="space-y-4 stagger-child">
+                <h2 class="font-body-lg text-body-lg text-on-surface-variant border-l-4 border-primary pl-6" style="font-family:'Outfit',sans-serif;font-weight:300;text-transform:none;letter-spacing:0.01em;">
+                    La investigación forense que está desmontando silenciosamente la explicación convencional del fenómeno UAP…
+                </h2>
+                <h3 class="font-body-lg text-body-lg text-outline italic">
+                    (Y por qué gobiernos, pilotos militares y sistemas de detección avanzada ya no pueden ignorarlo)
+                </h3>
+            </div>
+            <div class="space-y-6 stagger-child">
+                <div class="font-body-md text-body-md text-on-surface-variant space-y-4">
+                    <p>Durante décadas, las personas racionales descartaron el fenómeno OVNI.</p>
+                    <p>Y tenían buenas razones para hacerlo.</p>
+                    <p>Fraudes. Charlatanes. Documentales absurdos. Testigos poco fiables. Pseudociencia.</p>
+                    <p>Entonces ocurrió algo inesperado.</p>
+                    <p>El Pentágono autenticó videos capturados por pilotos de combate. El Congreso exigió informes oficiales. Radares militares comenzaron a registrar maniobras imposibles. Y gobiernos que pasaron décadas ridiculizando el fenómeno tuvieron que admitir públicamente una verdad incómoda:</p>
+                    <p class="font-bold text-on-surface">existen objetos que detectamos, rastreamos, grabamos, y todavía no podemos explicar.</p>
+                    <p>IRREDUCTIBLE no es un libro sobre creencias.</p>
+                    <p>Es una investigación construida como una auditoría forense.</p>
+                    <p>Un proceso de eliminación sistemática que recorre:</p>
+                    <ul class="font-data-mono text-primary text-sm list-none space-y-1">
+                        <li>archivos históricos,</li>
+                        <li>casos militares desclasificados,</li>
+                        <li>evidencia multiespectral,</li>
+                        <li>física de sensores,</li>
+                        <li>informes de inteligencia,</li>
+                        <li>y testimonios corroborados instrumentalmente.</li>
+                    </ul>
+                </div>
+                <div class="font-data-mono text-body-md space-y-2 border-t border-outline-variant/30 pt-6">
+                    <p class="text-primary">La pregunta ya no es: "¿Existen los OVNIs?"</p>
+                    <p class="text-on-surface font-bold">La pregunta es: ¿Qué queda cuando las explicaciones convencionales empiezan a agotarse?</p>
+                </div>
+                <div class="pt-8 pb-20">
+                    <button class="cta-scan bg-primary text-on-primary px-10 py-4 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest">
+                        OBTENER IRREDUCTIBLE AHORA
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Image column: 45%, bleeds right -->
+        <div class="w-full md:w-[45%] order-1 md:order-2 flex justify-end relative pr-0">
+            <div class="relative inline-block">
+                <div class="absolute -inset-4 border border-steel-blue/20 pointer-events-none group-hover:border-steel-blue/40 transition-colors"></div>
+                <div class="hud-bracket-tl"></div><div class="hud-bracket-tr"></div>
+                <div class="hud-bracket-bl"></div><div class="hud-bracket-br"></div>
+                <img alt="The book cover of IRREDUCTIBLE showing a dark cinematic scene with a triangular UAP craft over a dark ocean" class="w-full max-w-md shadow-2xl relative z-10" src="cover.png" style="border: 1px solid rgba(74,127,165,0.5); box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(184,146,42,0.3), inset 0 0 0 1px rgba(74,127,165,0.2);"/>
+                <div class="absolute -bottom-6 -right-6 font-data-mono text-[10px] text-steel-blue/60 leading-tight hidden lg:block">
+                    SCAN_ID: 8842-X<br/>
+                    VERIFIED_SOURCE<br/>
+                    [|||||||||||||||] 100%
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 2: PSYCHOLOGICAL HOOK — pt-12 pb-20 (heavy text) -->
+<section class="section-reveal pt-12 pb-20 px-margin-mobile md:px-margin-desktop bg-surface-container-low border-y border-outline-variant/20 relative">
+    <div class="hud-bracket-tl opacity-40"></div>
+    <div class="hud-bracket-br opacity-40"></div>
+    <div class="max-w-4xl mx-auto border-l-2 border-primary pl-8 md:pl-12">
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-8">Este libro fue escrito para personas que NO querían creer.</h2>
+        <div class="space-y-6 font-body-lg text-on-surface-variant">
+            <p class="stagger-child">Ese detalle importa.</p>
+            <p class="stagger-child">Porque la mayoría de los libros sobre OVNIs intentan convencerte desde la primera página.</p>
+            <p class="stagger-child">IRREDUCTIBLE hace lo contrario.</p>
+            <p class="stagger-child">Empieza descartando.</p>
+            <p class="stagger-child">Descarta:</p>
+            <ul class="space-y-4 font-data-mono text-body-md list-none stagger-list">
+                <li class="border-l-2 border-primary pl-4">errores de percepción,</li>
+                <li class="border-l-2 border-primary pl-4">contaminación cultural,</li>
+                <li class="border-l-2 border-primary pl-4">explicaciones meteorológicas,</li>
+                <li class="border-l-2 border-primary pl-4">sesgos cognitivos,</li>
+                <li class="border-l-2 border-primary pl-4">tecnología humana convencional,</li>
+                <li class="border-l-2 border-primary pl-4">y décadas de ruido pseudocientífico.</li>
+            </ul>
+            <p class="stagger-child">Y precisamente por eso el libro se vuelve inquietante.</p>
+            <p class="stagger-child">Porque cuando eliminas el ruido… queda algo.</p>
+            <p class="stagger-child">Algo persistente.</p>
+            <p class="stagger-child">Algo que atraviesa:</p>
+            <ul class="font-data-mono text-sm text-primary list-none space-y-1 stagger-list">
+                <li class="border-l-2 border-primary pl-4">civilizaciones,</li>
+                <li class="border-l-2 border-primary pl-4">registros históricos,</li>
+                <li class="border-l-2 border-primary pl-4">radares,</li>
+                <li class="border-l-2 border-primary pl-4">pilotos,</li>
+                <li class="border-l-2 border-primary pl-4">sensores infrarrojos,</li>
+                <li class="border-l-2 border-primary pl-4">gobiernos,</li>
+                <li class="border-l-2 border-primary pl-4">y décadas de análisis.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 3: INSTITUTIONAL SHIFT — py-32 -->
+<section class="section-reveal py-32 px-margin-mobile md:px-margin-desktop relative overflow-hidden">
+    <div class="absolute right-[-10%] top-[-10%] opacity-5">
+        <svg class="text-steel-blue fill-none stroke-current stroke-1" height="600" viewbox="0 0 100 100" width="600">
+            <circle cx="50" cy="50" r="45" stroke-dasharray="2 2"></circle>
+            <circle cx="50" cy="50" r="30"></circle>
+            <line x1="0" x2="100" y1="50" y2="50"></line>
+            <line x1="50" x2="50" y1="0" y2="100"></line>
+        </svg>
+    </div>
+    <div class="max-w-4xl mx-auto space-y-10 relative z-10">
+        <div class="flex items-center gap-4 mb-8">
+            <span class="font-data-mono text-[10px] text-steel-blue tracking-[0.2em]">PENTAGON_BRIEF // CONGRESS_REPORT // DECLASSIFIED</span>
+            <div class="flex-1 h-px bg-primary/20"></div>
+            <span class="font-data-mono text-[10px] text-primary">2017 — 2024</span>
+        </div>
+        <h2 class="font-headline-md text-headline-md text-primary stagger-child">El cambio institucional (Pentágono, informes, Congreso)</h2>
+        <div class="font-body-lg text-on-surface-variant leading-relaxed space-y-6 stagger-child">
+            <p>
+                El Pentágono autenticó videos capturados por pilotos de combate. El Congreso exigió informes oficiales. Radares militares comenzaron a registrar maniobras imposibles. Y gobiernos que pasaron décadas ridiculizando el fenómeno tuvieron que admitir públicamente una verdad incómoda:
+            </p>
+            <p class="font-bold text-on-surface">existen objetos que detectamos, rastreamos, grabamos, y todavía no podemos explicar.</p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 4: METHOD — pt-16 pb-24 (heavy text) -->
+<section class="section-reveal pt-16 pb-24 px-margin-mobile md:px-margin-desktop bg-surface">
+    <div class="max-w-container-max mx-auto">
+        <div class="mb-16 space-y-4">
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-2">El método del libro</h2>
+            <p class="font-body-lg text-on-surface-variant stagger-child">La mayoría de los libros sobre el fenómeno UAP fallan por una razón:</p>
+            <p class="font-data-mono text-body-lg text-primary stagger-child">Confunden especulación con investigación. IRREDUCTIBLE trabaja exactamente al revés.</p>
+            <p class="font-body-md text-on-surface-variant stagger-child">No parte de una conclusión. Parte de evidencia verificable.</p>
+        </div>
+        <!-- Staggered method list — destroyed card grid -->
+        <div class="space-y-0 max-w-4xl mx-auto mb-20">
+            <div class="ml-0 border-t border-primary/30 py-8 flex gap-8 items-start stagger-child">
+                <span class="font-data-mono text-steel-blue text-lg flex-shrink-0 w-8">01</span>
+                <div>
+                    <h4 class="font-label-caps text-on-surface mb-2">Explicaciones convencionales evaluadas seriamente</h4>
+                    <p class="font-data-mono text-[12px] text-on-surface-variant">No caricaturas fáciles. Hipótesis reales sometidas a contraste.</p>
+                </div>
+            </div>
+            <div class="ml-8 border-t border-primary/30 py-8 flex gap-8 items-start stagger-child">
+                <span class="font-data-mono text-steel-blue text-lg flex-shrink-0 w-8">02</span>
+                <div>
+                    <h4 class="font-label-caps text-on-surface mb-2">Física de sensores y convergencia instrumental</h4>
+                    <p class="font-data-mono text-[12px] text-on-surface-variant">Radar + visual + infrarrojo + telemetría.</p>
+                </div>
+            </div>
+            <div class="ml-16 border-t border-primary/30 py-8 flex gap-8 items-start stagger-child">
+                <span class="font-data-mono text-steel-blue text-lg flex-shrink-0 w-8">03</span>
+                <div>
+                    <h4 class="font-label-caps text-on-surface mb-2">Análisis de inteligencia gubernamental</h4>
+                    <p class="font-data-mono text-[12px] text-on-surface-variant">Informes oficiales, documentos desclasificados y evolución institucional.</p>
+                </div>
+            </div>
+            <div class="ml-24 border-t border-primary/30 py-8 border-b flex gap-8 items-start stagger-child">
+                <span class="font-data-mono text-steel-blue text-lg flex-shrink-0 w-8">04</span>
+                <div>
+                    <h4 class="font-label-caps text-on-surface mb-2">El método del "embudo de eliminación"</h4>
+                    <p class="font-data-mono text-[12px] text-on-surface-variant">La columna vertebral intelectual del libro.</p>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-4xl mx-auto bg-surface-container p-12 border-technical relative stagger-child">
+            <div class="hud-bracket-tl opacity-40"></div>
+            <div class="hud-bracket-br opacity-40"></div>
+            <h3 class="font-label-caps text-on-surface mb-6 tracking-[0.15em]">AUTORIDAD Y CREDIBILIDAD</h3>
+            <div class="font-body-md text-on-surface-variant space-y-4">
+                <p>Lo que hace poderoso este libro no es la conclusión. Es el método.</p>
+                <p>El manuscrito fue construido utilizando:</p>
+                <ul class="font-data-mono text-sm grid grid-cols-1 md:grid-cols-2 gap-2 text-on-surface">
+                    <li class="border-l-2 border-primary pl-4">documentación histórica verificable,</li>
+                    <li class="border-l-2 border-primary pl-4">análisis comparativo de casos,</li>
+                    <li class="border-l-2 border-primary pl-4">archivos desclasificados,</li>
+                    <li class="border-l-2 border-primary pl-4">informes gubernamentales,</li>
+                    <li class="border-l-2 border-primary pl-4">convergencia instrumental,</li>
+                    <li class="border-l-2 border-primary pl-4">física de sensores,</li>
+                    <li class="border-l-2 border-primary pl-4">y evaluación competitiva de hipótesis.</li>
+                </ul>
+                <p class="pt-4">En lugar de pedirte que creas… el libro te invita a observar el proceso de eliminación. Y sacar tus propias conclusiones.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 5: HISTORICAL CASES — py-40 -->
+<section class="section-reveal py-40 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+    <div class="max-w-4xl mx-auto space-y-12">
+        <div class="space-y-4">
+            <h2 class="font-headline-md text-headline-md text-on-surface">Casos históricos</h2>
+            <h3 class="font-body-lg text-primary flex items-center gap-4 stagger-child">
+                Casos históricos auditados con metodología documental
+            </h3>
+            <p class="font-data-mono text-body-md text-outline stagger-child">Desde Ezequiel y Núremberg hasta José Bonilla y los Foo Fighters.</p>
+        </div>
+        <div class="space-y-4 bg-surface-container-high/50 p-8 border-l-4 border-primary relative stagger-child">
+            <div class="hud-bracket-tr opacity-40"></div>
+            <div class="hud-bracket-bl opacity-40"></div>
+            <h4 class="font-headline-md text-headline-md text-primary mb-6">Dentro de IRREDUCTIBLE descubrirás:</h4>
+            <ul class="space-y-4 font-body-lg text-on-surface-variant list-none stagger-list">
+                <li class="border-l-2 border-primary pl-4">La razón por la que el fenómeno aparece documentado siglos antes de la aviación moderna.</li>
+                <li class="border-l-2 border-primary pl-4">Qué tienen en común Ezequiel, Núremberg y los sistemas Aegis del siglo XXI.</li>
+                <li class="border-l-2 border-primary pl-4">El patrón histórico que atraviesa civilizaciones sin contacto entre sí.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 6: NIMITZ — py-12, full-bleed -->
+<section class="section-reveal relative min-h-[80vh] flex items-center justify-center py-12">
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface via-surface/80 to-surface"></div>
+        <img alt="Military surveillance atmospheric background" class="w-full h-full object-cover opacity-30 grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe2M0QSxeok5urDXUMmJAcotbJygAumM2FnmHsuEcsa__rJZ_8qcSjphd_nYc0PfTezGJPwHiwKCuPvuWeSbhBd4benBrPbGOELz-Oyl1nQPj728szScOj9QWbfYDQ7VjKLKdXVy6VYLi19JUHajIXC9v6driLd1E3_cZzppnC3e96BIyBeDwoNK3HziZeLgOCoxBVySR9u1Als66TKYzGJPpxlbtajJ1Y6JTNb7-ikoPpjgZQcfBAVQ5ikyWfwBjjLa47o3HDmNA"/>
+    </div>
+    <div class="relative z-10 max-w-4xl w-full space-y-12">
+        <!-- Ghost date -->
+        <div class="relative text-center">
+            <div class="ghost-date select-none" aria-hidden="true">14.11.2004</div>
+            <hr class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 border-primary/30"/>
+        </div>
+        <div class="space-y-8 px-margin-mobile md:px-margin-desktop">
+            <h2 class="font-headline-md text-headline-md text-on-surface text-center">Nimitz / evidencia instrumental</h2>
+            <p class="font-headline-md text-headline-md text-on-surface uppercase tracking-widest text-center stagger-child">El caso que cambió todo</p>
+            <div class="max-w-2xl mx-auto space-y-6 stagger-child">
+                <p class="font-body-lg text-on-surface-variant italic">
+                    14 de noviembre de 2004. Costa de California. El grupo de combate USS Nimitz detecta objetos descendiendo desde 24.000 metros hasta nivel del mar en segundos. Sin firma térmica. Sin alas. Sin sistema de propulsión visible. Los radares Aegis los rastrean. Pilotos de élite los observan. Sensores infrarrojos los registran. Y veinte años después… la explicación oficial sigue sin existir.
+                </p>
+                <p class="font-body-lg text-on-surface">Ese es el corazón de IRREDUCTIBLE. No un avistamiento aislado. Sino el momento en que el fenómeno dejó de depender exclusivamente de testimonios humanos… …y empezó a quedar registrado por instrumentos militares avanzados.</p>
+            </div>
+            <div class="pt-12 grid grid-cols-1 md:grid-cols-2 gap-8 text-left stagger-child">
+                <div class="border-technical p-6 bg-surface-container/50 backdrop-blur-sm relative">
+                    <div class="hud-bracket-tl hud-bracket-nimitz opacity-30"></div>
+                    <div class="hud-bracket-br hud-bracket-nimitz opacity-30"></div>
+                    <h4 class="font-label-caps text-steel-blue mb-4">Evidencia militar moderna</h4>
+                    <p class="font-data-mono text-[12px] text-on-surface mb-4">Nimitz, Tic Tac, Gimbal, GoFast, Teherán, Rendlesham y más.</p>
+                    <ul class="font-data-mono text-[12px] space-y-2 text-on-surface-variant">
+                        <li class="border-l-2 border-primary pl-4">&gt; Por qué el Pentágono pasó de ridiculizar el fenómeno a autenticar videos oficiales.</li>
+                        <li class="border-l-2 border-primary pl-4">&gt; El detalle técnico del caso Nimitz que hace colapsar las explicaciones convencionales.</li>
+                        <li class="border-l-2 border-primary pl-4">&gt; Cómo funcionan realmente los radares militares que detectaron los objetos.</li>
+                        <li class="border-l-2 border-primary pl-4">&gt; Cómo la convergencia radar + visual + infrarrojo cambia completamente el debate.</li>
+                    </ul>
+                </div>
+                <div class="border-technical p-6 bg-primary/5 backdrop-blur-sm border-primary/30">
+                    <h4 class="font-label-caps text-label-caps text-steel-blue tracking-widest mb-4">DENTRO DE IRREDUCTIBLE DESCUBRIRÁS</h4>
+                    <ul class="font-data-mono text-[12px] space-y-2 text-on-surface-variant">
+                        <li class="border-l-2 border-primary pl-4">[||||] Por qué el Pentágono pasó de ridiculizar el fenómeno a autenticar videos oficiales.</li>
+                        <li class="border-l-2 border-primary pl-4">[||||] El detalle técnico del caso Nimitz que hace colapsar las explicaciones convencionales.</li>
+                        <li class="border-l-2 border-primary pl-4">[||||] Cómo funcionan realmente los radares militares que detectaron los objetos.</li>
+                        <li class="border-l-2 border-primary pl-4">[||||] Cómo la convergencia radar + visual + infrarrojo cambia completamente el debate.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 7: ELIMINATION FUNNEL — pt-32 pb-48 (heavy text) -->
+<section class="section-reveal pt-32 pb-48 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex flex-col items-start text-left mb-16">
+            <div class="w-1 h-24 bg-gradient-to-b from-primary to-transparent mb-8"></div>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-4">El embudo de eliminación</h2>
+            <p class="font-body-lg text-on-surface-variant stagger-child">IRREDUCTIBLE hace lo contrario. Empieza descartando.</p>
+        </div>
+        <div class="space-y-6 font-body-lg text-on-surface-variant text-left max-w-2xl">
+            <p class="stagger-child">Descarta:</p>
+            <div class="flex flex-wrap gap-4 font-data-mono text-sm text-primary stagger-child">
+                <span class="px-4 py-2 border border-outline-variant/30">errores de percepción</span>
+                <span class="px-4 py-2 border border-outline-variant/30">contaminación cultural</span>
+                <span class="px-4 py-2 border border-outline-variant/30">explicaciones meteorológicas</span>
+                <span class="px-4 py-2 border border-outline-variant/30">sesgos cognitivos</span>
+                <span class="px-4 py-2 border border-outline-variant/30">tecnología humana convencional</span>
+                <span class="px-4 py-2 border border-outline-variant/30">y décadas de ruido pseudocientífico</span>
+            </div>
+            <p class="pt-8 stagger-child">Y precisamente por eso el libro se vuelve inquietante. Porque cuando eliminas el ruido… queda algo. Algo persistente.</p>
+        </div>
+        <div class="mt-16 bg-surface-container p-10 border-technical stagger-child relative">
+            <div class="hud-bracket-tl opacity-40"></div>
+            <div class="hud-bracket-br opacity-40"></div>
+            <p class="font-data-mono text-xs text-steel-blue mb-6">&gt; OUTPUT_TERMINAL: descubrimientos</p>
+            <ul class="space-y-4 font-body-md text-on-surface-variant list-none">
+                <li class="flex items-start gap-4 border-l-2 border-primary pl-4">
+                    <span class="font-data-mono text-primary flex-shrink-0">01.</span>
+                    <span>Por qué la hipótesis de "tecnología secreta humana" se vuelve cada vez más difícil de sostener.</span>
+                </li>
+                <li class="flex items-start gap-4 border-l-2 border-primary pl-4">
+                    <span class="font-data-mono text-primary flex-shrink-0">02.</span>
+                    <span>El error intelectual que hace que la mayoría descarte el fenómeno demasiado rápido.</span>
+                </li>
+                <li class="flex items-start gap-4 border-l-2 border-primary pl-4">
+                    <span class="font-data-mono text-primary flex-shrink-0">03.</span>
+                    <span>Y la pregunta que empieza a emerger cuando todas las demás explicaciones pierden fuerza.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 8: PHILOSOPHICAL IMPLICATIONS — py-16 -->
+<section class="section-reveal py-16 px-margin-mobile md:px-margin-desktop bg-[#050505]">
+    <div class="max-w-2xl mx-auto text-left space-y-12">
+        <div class="space-y-4">
+            <h2 class="font-headline-md text-headline-md text-on-surface">Implicaciones filosóficas</h2>
+            <p class="font-label-caps text-label-caps text-outline tracking-[0.3em] stagger-child">EL CAMBIO DE PARADIGMA</p>
+            <p class="font-headline-md text-headline-md text-on-surface stagger-child">Este libro plantea una idea profundamente incómoda:</p>
+        </div>
+        <div class="relative py-12 px-8 stagger-child">
+            <div class="hud-bracket-tl"></div><div class="hud-bracket-br"></div>
+            <blockquote class="font-headline-md text-headline-md text-primary italic leading-tight">
+                "Tal vez la humanidad está enfrentando su segundo momento copernicano."
+            </blockquote>
+        </div>
+        <div class="font-body-lg text-on-surface-variant leading-relaxed text-left space-y-6">
+            <p class="stagger-child">El primero ocurrió cuando descubrimos que la Tierra no era el centro del universo.</p>
+            <p class="stagger-child">El segundo podría ocurrir cuando descubramos que no poseemos el monopolio de la inteligencia. No en otra galaxia. Aquí. En nuestro entorno inmediato.</p>
+            <div class="bg-primary/5 border border-primary/20 p-8 space-y-6 stagger-child">
+                <span class="font-label-caps text-on-surface block text-left">TENSIÓN FINAL</span>
+                <div class="space-y-4 text-on-surface-variant font-body-md">
+                    <p>Lo inquietante no es que existan objetos sin explicación. La historia de la ciencia está llena de anomalías temporales. Lo inquietante es otra cosa. Que después de décadas de:</p>
+                    <ul class="font-data-mono text-xs space-y-1">
+                        <li class="border-l-2 border-primary pl-4">satélites,</li>
+                        <li class="border-l-2 border-primary pl-4">radares,</li>
+                        <li class="border-l-2 border-primary pl-4">sensores avanzados,</li>
+                        <li class="border-l-2 border-primary pl-4">pilotos militares,</li>
+                        <li class="border-l-2 border-primary pl-4">análisis de inteligencia,</li>
+                        <li class="border-l-2 border-primary pl-4">y vigilancia aérea global…</li>
+                    </ul>
+                    <p>la anomalía siga ahí. Persistente. Irreductible.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 9: FOR WHOM — py-40, 65/35 split -->
+<section class="section-reveal py-40 px-margin-mobile md:px-margin-desktop border-t border-outline-variant/30">
+    <div class="max-w-container-max mx-auto space-y-12">
+        <h2 class="font-headline-md text-headline-md text-on-surface">Para quién es</h2>
+        <div class="flex flex-col md:flex-row gap-12">
+            <!-- FOR YOU — 65% -->
+            <div class="w-full md:w-[65%] space-y-8">
+                <h3 class="font-headline-md text-headline-md text-primary flex items-center gap-4">
+                    <span class="font-headline-md text-[48px] leading-none text-primary">+</span> Este libro es para ti si:
+                </h3>
+                <ul class="space-y-4 font-body-md text-on-surface-variant stagger-list">
+                    <li class="border-l-2 border-primary pl-4 pb-4">Te interesan los límites de la ciencia y la evidencia.</li>
+                    <li class="border-l-2 border-primary pl-4 pb-4">Disfrutas investigaciones rigurrosas y bien documentadas.</li>
+                    <li class="border-l-2 border-primary pl-4 pb-4">Buscas análisis serios lejos del sensacionalismo.</li>
+                    <li class="border-l-2 border-primary pl-4 pb-4">Te interesa inteligencia militar, defensa y tecnología.</li>
+                    <li class="border-l-2 border-primary pl-4 pb-4">Te obsesionan las preguntas difíciles.</li>
+                    <li class="border-l-2 border-primary pl-4">Eres escéptico… pero intelectualmente honesto.</li>
+                </ul>
+            </div>
+            <!-- NOT FOR YOU — 35%, opacity-60 -->
+            <div class="w-full md:w-[35%] space-y-8 opacity-60">
+                <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-4">
+                    <span class="font-headline-md text-[48px] leading-none text-on-surface">×</span> Este libro NO es para ti si:
+                </h3>
+                <ul class="space-y-4 font-body-md text-on-surface-variant list-none">
+                    <li class="border-l-2 border-outline-variant pl-4 pb-4">Buscas fantasía esotérica.</li>
+                    <li class="border-l-2 border-outline-variant pl-4 pb-4">Quieres conspiraciones fáciles.</li>
+                    <li class="border-l-2 border-outline-variant pl-4 pb-4">Necesitas respuestas absolutas.</li>
+                    <li class="border-l-2 border-outline-variant pl-4 pb-4">Prefieres certezas cómodas.</li>
+                    <li class="p-4 bg-surface-container-high border border-outline-variant/30 mt-4">
+                        <p class="font-body-md">IRREDUCTIBLE no promete certezas. Promete algo mucho más raro: <strong class="text-primary">rigor</strong>.</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 10: FINAL CTA — py-12, full-bleed -->
+<section class="section-reveal py-12 bg-surface relative">
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle, #4a7fa5 1px, transparent 1px); background-size: 40px 40px;"></div>
+    </div>
+    <div class="max-w-3xl mx-auto text-center space-y-12 relative z-10">
+        <div class="relative inline-block stagger-child">
+            <div class="hud-bracket-tl"></div><div class="hud-bracket-br"></div>
+            <h1 class="font-display-lg text-display-lg text-on-surface tracking-widest px-12 py-8">IRREDUCTIBLE</h1>
+        </div>
+        <div class="space-y-6 font-headline-md text-headline-md text-outline stagger-child">
+            <p style="font-size:32px;line-height:110%;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;">La investigación forense que está desmontando silenciosamente la explicación convencional del fenómeno UAP…</p>
+            <p style="font-size:32px;line-height:110%;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;">Porque después de décadas de radares, pilotos militares y sistemas de detección avanzada…</p>
+            <p class="text-on-surface" style="font-size:32px;line-height:110%;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;font-weight:700;">la anomalía sigue ahí.</p>
+        </div>
+        <div class="font-body-lg text-primary uppercase tracking-[0.2em] space-y-2 stagger-child">
+            <p style="font-size:32px;line-height:110%;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;">Persistente.</p>
+            <p style="font-size:32px;line-height:110%;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;">Irreductible.</p>
+        </div>
+        <p class="font-body-lg text-on-surface-variant italic stagger-child">Léelo y decide por ti mismo qué explicación sobrevive cuando todas las demás empiezan a caer.</p>
+        <div class="flex flex-col items-center gap-8 pt-8 stagger-child">
+            <button class="cta-scan bg-primary text-on-primary w-full max-w-md py-6 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest">
+                OBTENER IRREDUCTIBLE AHORA
+            </button>
+            <div class="space-y-2">
+                <p class="font-label-caps text-label-caps text-outline">ESCRITO POR</p>
+                <p class="font-headline-md text-headline-md text-on-surface tracking-[0.4em]">PABLO BRAVO</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="w-full py-8 bg-surface-container-lowest border-t border-outline-variant/20 px-margin-mobile md:px-margin-desktop text-center">
+    <p class="font-headline-md text-headline-md text-primary">IRREDUCTIBLE</p>
+    <p class="font-data-mono text-[12px] text-on-surface-variant mt-2">© 2026 Pablo Bravo</p>
+</footer>
+
+<script>
+(function() {
+    'use strict';
+
+    // H1 letter-spacing animation on load
+    var h1 = document.querySelector('h1');
+    if (h1) {
+        h1.style.letterSpacing = '0.25em';
+        h1.style.transition = 'letter-spacing 700ms ease-out';
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                h1.style.letterSpacing = '0.02em';
+            });
+        });
+    }
+
+    // Set stagger delays for child elements
+    function applyStaggerDelays() {
+        // Section-level stagger children (80ms)
+        var staggerContainers = document.querySelectorAll('section');
+        staggerContainers.forEach(function(section) {
+            var children = section.querySelectorAll(':scope > * > .stagger-child, :scope > * > * > .stagger-child');
+            children.forEach(function(child, i) {
+                child.style.transitionDelay = (i * 80) + 'ms';
+            });
+        });
+
+        // List stagger (60ms, x direction)
+        var staggerLists = document.querySelectorAll('.stagger-list');
+        staggerLists.forEach(function(list) {
+            var items = list.querySelectorAll('li');
+            items.forEach(function(li, i) {
+                li.style.transitionDelay = (i * 60) + 'ms';
+            });
+        });
+    }
+
+    applyStaggerDelays();
+
+    // IntersectionObserver for section reveals
+    var sectionObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                sectionObserver.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: "0px 0px -50px 0px", threshold: 0 });
+
+    var sections = document.querySelectorAll('.section-reveal');
+    sections.forEach(function(section) {
+        sectionObserver.observe(section);
+    });
+
+    // Immediately reveal sections already visible on load
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top < window.innerHeight) {
+            section.classList.add('is-visible');
+            sectionObserver.unobserve(section);
+        }
+    });
+
+    // Nimitz HUD brackets observer (separate, for bracket animation)
+    var nimitzObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                nimitzObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    var nimitzBrackets = document.querySelectorAll('.hud-bracket-nimitz');
+    nimitzBrackets.forEach(function(bracket) {
+        nimitzObserver.observe(bracket);
+    });
+
+})();
+</script>
+</body>
+</html>
