@@ -29,58 +29,72 @@ VIDEOS_DIR = Path(r"C:\Users\pablo\Downloads\UAP released\uapvideos")
 OUTPUT_JSON = Path("scripts/cloudinary_urls.json")
 FOLDER = "pursue-corpus"
 
-def upload_file(filepath):
+def upload_file(filepath, resource_type="auto"):
     """Sube un archivo a Cloudinary en la carpeta pursue-corpus."""
     public_id = f"{FOLDER}/{filepath.stem}"
     result = cloudinary.uploader.upload(
         str(filepath),
         public_id=public_id,
-        resource_type="auto",
+        resource_type=resource_type,
         overwrite=True,
     )
     return result["secure_url"]
 
-def main():
+def main(pdfs_only=False):
     urls = {}
 
     # Cargar existentes si hay
     if OUTPUT_JSON.exists():
         urls = json.loads(OUTPUT_JSON.read_text(encoding="utf-8"))
 
-    # Release_1
-    files_r1 = sorted(RELEASE_DIR.glob("*"))
-    print(f"Release_1: {len(files_r1)} archivos")
-    for fp in files_r1:
-        if fp.is_dir():
-            continue
-        if fp.name in urls:
-            print(f"  SKIP: {fp.name} (ya subido)")
-            continue
-        try:
-            url = upload_file(fp)
-            urls[fp.name] = url
-            print(f"  OK: {fp.name}")
-        except Exception as e:
-            print(f"  ERROR: {fp.name} — {e}")
+    if pdfs_only:
+        # Solo PDFs con resource_type='raw'
+        all_files = list(RELEASE_DIR.glob("*.pdf"))
+        print(f"Re-subiendo {len(all_files)} PDFs con resource_type=raw")
+        for fp in sorted(all_files):
+            try:
+                url = upload_file(fp, resource_type="raw")
+                urls[fp.name] = url
+                print(f"  OK: {fp.name}")
+            except Exception as e:
+                print(f"  ERROR: {fp.name} — {e}")
+    else:
+        # Release_1
+        files_r1 = sorted(RELEASE_DIR.glob("*"))
+        print(f"Release_1: {len(files_r1)} archivos")
+        for fp in files_r1:
+            if fp.is_dir():
+                continue
+            if fp.name in urls:
+                print(f"  SKIP: {fp.name} (ya subido)")
+                continue
+            try:
+                url = upload_file(fp)
+                urls[fp.name] = url
+                print(f"  OK: {fp.name}")
+            except Exception as e:
+                print(f"  ERROR: {fp.name} — {e}")
 
-    # uapvideos
-    files_vid = sorted(VIDEOS_DIR.glob("*"))
-    print(f"uapvideos: {len(files_vid)} archivos")
-    for fp in files_vid:
-        if fp.is_dir():
-            continue
-        if fp.name in urls:
-            print(f"  SKIP: {fp.name} (ya subido)")
-            continue
-        try:
-            url = upload_file(fp)
-            urls[fp.name] = url
-            print(f"  OK: {fp.name}")
-        except Exception as e:
-            print(f"  ERROR: {fp.name} — {e}")
+        # uapvideos
+        files_vid = sorted(VIDEOS_DIR.glob("*"))
+        print(f"uapvideos: {len(files_vid)} archivos")
+        for fp in files_vid:
+            if fp.is_dir():
+                continue
+            if fp.name in urls:
+                print(f"  SKIP: {fp.name} (ya subido)")
+                continue
+            try:
+                url = upload_file(fp)
+                urls[fp.name] = url
+                print(f"  OK: {fp.name}")
+            except Exception as e:
+                print(f"  ERROR: {fp.name} — {e}")
 
     OUTPUT_JSON.write_text(json.dumps(urls, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n{len(urls)} URLs guardadas en {OUTPUT_JSON}")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    pdfs_only = "--pdfs-only" in sys.argv
+    main(pdfs_only=pdfs_only)
