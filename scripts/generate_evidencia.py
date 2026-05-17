@@ -199,7 +199,6 @@ def get_media_block(caso):
 
     # URL de Cloudinary disponible
     if ext == ".pdf":
-        url = url.replace("/image/upload/", "/raw/upload/")
         return f"""<a href="{url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
       -> DESCARGAR PDF ORIGINAL
     </a>"""
