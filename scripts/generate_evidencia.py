@@ -39,27 +39,33 @@ def md_to_html(content):
             # Inline bold
             line = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", line)
             # Inline code
-            line = re.sub(r"(.*?)", r'<code class="font-metadata text-metadata text-primary bg-surface-container-low px-2 py-1">\1</code>', line)
+            line = re.sub(r"`(.*?)`", r'<code class="font-metadata text-metadata text-primary bg-surface-container-low px-2 py-1">\1</code>', line)
             html_lines.append(f'<p class="font-body-md text-body-md mb-3">{line}</p>')
     return "\n".join(html_lines)
 
-def generate_page(md_path):
+def generate_page(md_path, used_slugs):
     """Genera una pagina HTML desde un archivo .md."""
     content = md_path.read_text(encoding="utf-8", errors="ignore")
-    
+
     # Extraer titulo (primera linea con #)
     title = md_path.stem
     for line in content.split("\n"):
         if line.startswith("# "):
             title = line[2:].strip()
             break
-    
+
     # Extraer descripcion para SEO (primeros 160 chars de contenido)
     clean_content = re.sub(r"[#*\-]", "", content)
     description = " ".join(clean_content.split())[:160]
-    
-    # Slug y nombre de archivo output
-    slug = slugify(md_path.name)
+
+    # Slug con deteccion de colisiones
+    base_slug = slugify(md_path.name)
+    slug = base_slug
+    counter = 2
+    while slug in used_slugs:
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    used_slugs.add(slug)
     output_path = OUTPUT_DIR / f"{slug}.html"
     
     # Renderizar contenido
@@ -194,15 +200,20 @@ def main():
         print(f"ERROR: No se encontro el directorio de extractions: {EXTRACTIONS_DIR}")
         return
     
+    # Limpiar output previo
+    if OUTPUT_DIR.exists():
+        for f in OUTPUT_DIR.glob("*.html"):
+            f.unlink()
     OUTPUT_DIR.mkdir(exist_ok=True)
-    
-    md_files = list(EXTRACTIONS_DIR.glob("*.md"))
+
+    md_files = sorted(EXTRACTIONS_DIR.glob("*.md"))
     print(f"Encontrados {len(md_files)} archivos .md")
-    
+
+    used_slugs = set()
     generated = 0
     for md_path in md_files:
         try:
-            output_path, html = generate_page(md_path)
+            output_path, html = generate_page(md_path, used_slugs)
             output_path.write_text(html, encoding="utf-8")
             generated += 1
             print(f"  OK: {md_path.name} -> {output_path.name}")
