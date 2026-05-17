@@ -222,5 +222,42 @@ def main():
     
     print(f"\nGeneradas {generated}/{len(md_files)} paginas en evidencia/")
 
+    # Generar sitemap y robots
+    slugs = sorted(used_slugs)
+    generate_sitemap(slugs)
+    generate_robots()
+
+def generate_sitemap(slugs):
+    """Genera sitemap.xml en la raiz del proyecto."""
+    urls = [
+        ("", "monthly", "1.0"),
+        ("libro", "monthly", "0.9"),
+    ]
+    urls += [(f"evidencia/{s}", "monthly", "0.7") for s in slugs]
+
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    for path, freq, prio in urls:
+        xml.append("  <url>")
+        xml.append(f"    <loc>https://irreductible.site/{path}</loc>")
+        xml.append(f"    <changefreq>{freq}</changefreq>")
+        xml.append(f"    <priority>{prio}</priority>")
+        xml.append("  </url>")
+    xml.append("</urlset>")
+
+    sitemap_path = Path("sitemap.xml")
+    sitemap_path.write_text("\n".join(xml) + "\n", encoding="utf-8")
+    print(f"Sitemap generado: {sitemap_path} ({len(urls)} URLs)")
+
+def generate_robots():
+    """Genera robots.txt en la raiz del proyecto."""
+    robots = """User-agent: *
+Allow: /
+Sitemap: https://irreductible.site/sitemap.xml
+"""
+    robots_path = Path("robots.txt")
+    robots_path.write_text(robots, encoding="utf-8")
+    print(f"Robots generado: {robots_path}")
+
 if __name__ == "__main__":
     main()
