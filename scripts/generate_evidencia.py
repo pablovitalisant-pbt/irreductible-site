@@ -44,7 +44,7 @@ def parse_bloque(bloque):
     m = re.match(r"## (.+?) — Score (\d)/5 \(Categoría (\w+)\)", header)
     if not m:
         return None
-    caso["filename"] = m.group(1).strip()
+    caso["filename"] = re.sub(r"^\d+\.\s*", "", m.group(1).strip())
     caso["score"] = int(m.group(2))
     caso["categoria"] = m.group(3)
 
@@ -481,10 +481,75 @@ EVENTS = {
     "FBI-Photo-B20.pdf": {
         "name": "FBI FLIR — Nochevieja 1999",
         "frames": [f"FBI-Photo-B{i}.pdf" for i in range(1, 25)],
+        "desc": "24 fotogramas FLIR capturados por el FBI entre las 18:10:00 y las 18:22:12 del 31 de diciembre de 1999. Una secuencia de 12 minutos que muestra la evolucion de un objeto — desde una morfologia estructurada identificable hasta la aparicion de dos objetos simultaneos que resisten el descarte convencional.",
+        "agency": "FBI", "era": "31/12/1999", "frames_label": "24 (B1–B24)",
         "phases": [
             {"label": "FASE 1 — OBJETO ESTRUCTURADO (18:10:00–18:10:06)", "range": (1, 2)},
             {"label": "FASE 2 — PUNTO ÚNICO, TRACKING ACTIVO (18:10:12–18:11:12)", "range": (3, 12)},
             {"label": "FASE 3 — DOS OBJETOS SIMULTÁNEOS (18:18:53–18:22:12)", "range": (13, 24)},
+        ],
+    },
+    "FBI-Photo-A7.png": {
+        "name": "FBI — Cámara de Seguimiento Aérea",
+        "frames": [f"FBI-Photo-A{i}.png" for i in range(1, 9)],
+        "desc": "8 fotogramas de camara de seguimiento aerea (optica o IR) con telemetria completamente redactada. La secuencia muestra un punto oscuro rastreado por el sistema, que en A7 cambia a punto claro — la anomalia mas notable del grupo.",
+        "agency": "FBI", "era": "Indeterminada", "frames_label": "8 (A1–A8)",
+        "phases": [
+            {"label": "SECUENCIA COMPLETA — 8 FOTOGRAMAS", "range": (1, 8)},
+        ],
+    },
+    "NASA-UAP-VM4-Apollo-12-1969.jpg": {
+        "name": "Apollo 12 — Superficie Lunar 1969",
+        "frames": [f"NASA-UAP-VM{i}-Apollo-12-1969.jpg" for i in range(1, 6)],
+        "desc": "5 fotografias tomadas desde el modulo de comando del Apollo 12 durante su mision a la superficie lunar en noviembre de 1969. La camara Hasselblad capturo objetos anomalos que no han recibido explicacion oficial de la NASA.",
+        "agency": "NASA", "era": "Noviembre 1969", "frames_label": "5 (VM1–VM5)",
+        "phases": [
+            {"label": "SECUENCIA COMPLETA — 5 FOTOGRAFIAS", "range": (1, 5)},
+        ],
+    },
+    "65_HS1-834228961_62-HQ-83894_SUB_A.pdf": {
+        "name": "HQ-83894 — Expediente Completo",
+        "frames": [
+            "65_HS1-834228961_62-HQ-83894_Section_1.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_2.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_3.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_4.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_5.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_6.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_7.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_8.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_9.pdf",
+            "65_HS1-834228961_62-HQ-83894_Section_10.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_130.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_153.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_164.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_220.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_403.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_438.pdf",
+            "65_HS1-834228961_62-HQ-83894_Serial_449.pdf",
+            "65_HS1-834228961_62-HQ-83894_SUB_A.pdf",
+        ],
+        "desc": "Expediente completo HQ-83894. 18 archivos que componen un unico documento del Departamento de Guerra desclasificado en el corpus PURSUE. Incluye 10 secciones principales, 7 seriales anexos y un sub-anexo.",
+        "agency": "DOW", "era": "1948–1955", "frames_label": "18 archivos",
+        "phases": [
+            {"label": "SECCIONES PRINCIPALES (1-10)", "range": (1, 10)},
+            {"label": "SERIALES ANEXOS", "range": (11, 17)},
+            {"label": "SUB-ANEXO A", "range": (18, 18)},
+        ],
+    },
+    "38_143685_box7_Incident_Summaries_173-233.pdf": {
+        "name": "Incident Summaries — Box 7",
+        "frames": [
+            "38_143685_box7_Incident_Summaries_1-100.pdf",
+            "38_143685_box7_Incident_Summaries_101-172.pdf",
+            "38_143685_box7_Incident_Summaries_173-233.pdf",
+        ],
+        "desc": "Informe completo de resumenes de incidentes (Box 7). 233 casos documentados en 3 volumenes consecutivos del archivo militar.",
+        "agency": "DOW", "era": "Indeterminada", "frames_label": "3 volumenes",
+        "phases": [
+            {"label": "VOLUMEN 1 — INCIDENTES 1–100", "range": (1, 1)},
+            {"label": "VOLUMEN 2 — INCIDENTES 101–172", "range": (2, 2)},
+            {"label": "VOLUMEN 3 — INCIDENTES 173–233", "range": (3, 3)},
         ],
     },
 }
@@ -519,8 +584,6 @@ def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
     title_raw = f"{event_cfg['name']} — Análisis de 24 fotogramas"
 
     score_labels = {1: "CONVENCIONAL", 2: "PROBABLE CONVENCIONAL", 3: "INTERMEDIO", 4: "ANÓMALO", 5: "ALTAMENTE ANÓMALO"}
-    agency = "FBI"
-    era = "31/12/1999"
 
     # Timeline HTML
     timeline_html = ""
@@ -673,21 +736,21 @@ tailwind.config = {{
   <div class="mb-8">
     <h5 class="font-metadata text-metadata text-primary uppercase mb-1">// DOSSIER CASE_{index:02d} — EVENTO AGRUPADO</h5>
     <h1 class="font-headline-lg text-headline-lg text-on-background uppercase">{event_cfg["name"]}</h1>
-    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4">24 fotogramas FLIR capturados por el FBI entre las 18:10:00 y las 18:22:12 del 31 de diciembre de 1999. Una secuencia de 12 minutos que muestra la evolucion de un objeto — desde una morfologia estructurada identificable hasta la aparicion de dos objetos simultaneos que resisten el descarte convencional.</p>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4">{event_cfg["desc"]}</p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-surface-container-low border border-outline-variant p-4">
       <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Agencia</p>
-      <p class="font-metadata text-metadata text-primary">FBI</p>
+      <p class="font-metadata text-metadata text-primary">{event_cfg.get("agency", "?")}</p>
     </div>
     <div class="bg-surface-container-low border border-outline-variant p-4">
       <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Epoca</p>
-      <p class="font-metadata text-metadata text-primary">31/12/1999</p>
+      <p class="font-metadata text-metadata text-primary">{event_cfg.get("era", "?")}</p>
     </div>
     <div class="bg-surface-container-low border border-outline-variant p-4">
-      <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Fotogramas</p>
-      <p class="font-metadata text-metadata text-primary">24 (B1–B24)</p>
+      <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Archivos</p>
+      <p class="font-metadata text-metadata text-primary">{event_cfg.get("frames_label", str(len(event_cfg["frames"])))}</p>
     </div>
   </div>
 </section>
