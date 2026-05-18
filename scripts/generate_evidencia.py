@@ -606,8 +606,8 @@ def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
 
     # Frames HTML
     frames_html = ""
-    for fc in frames_casos:
-        num = fc["filename"].replace("FBI-Photo-B", "").replace(".pdf", "")
+    for idx, fc in enumerate(frames_casos):
+        num = str(idx + 1)  # indice 1-based para id y label
         score = fc.get("score", 0)
         obs = md_to_html(fc.get("observacion", ""))
         expl = md_to_html(fc.get("explicacion", ""))
@@ -632,7 +632,7 @@ def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
         frames_html += f"""
       <section id="frame-b{num}" class="border border-outline-variant bg-surface-container-lowest p-6 mb-4">
         <div class="flex justify-between items-start mb-4">
-          <h4 class="font-headline-sm text-headline-sm text-primary uppercase">Fotograma B{num}</h4>
+          <h4 class="font-headline-sm text-headline-sm text-primary uppercase">Archivo {num}: {fc['filename']}</h4>
           <span class="font-metadata text-metadata text-secondary">{score_labels.get(score, "?")} — {fc.get("categoria", "?")}</span>
         </div>
         <p class="font-metadata text-metadata-sm text-on-surface-variant mb-2">FUENTE: {fc.get("fuente", "")}</p>
