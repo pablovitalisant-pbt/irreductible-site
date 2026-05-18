@@ -293,7 +293,7 @@ def generate_page(caso, index, used_slugs):
     # Bloque CTA (usado 2 veces)
     cta_block = f"""<!-- CTA -->
     <section class="max-w-4xl mx-auto px-8 py-12 border-t border-outline-variant">
-      <div class="relative border border-primary bg-surface-container-lowest p-8">
+      <div class="relative border border-primary bg-surface-container-lowest p-8 text-center">
         <div class="corner-bracket bracket-tl"></div>
         <div class="corner-bracket bracket-tr"></div>
         <div class="corner-bracket bracket-bl"></div>
@@ -304,7 +304,7 @@ def generate_page(caso, index, used_slugs):
         <p style='font-family:Inter; font-size:16px; color:#e5e2e1; line-height:1.6; margin-bottom:8px;'>Analice los 158 archivos UAP desclasificados por el gobierno e intente descartarlos utilizando errores de percepcion, meteorologia, fallas de sensores y explicaciones convencionales.</p>
         <p style='font-family:Inter; font-size:16px; color:#e5e2e1; margin-bottom:8px;'>La mayoria colapso.</p>
         <p style='font-family:Inter; font-size:16px; color:#e5e2e1; margin-bottom:24px;'>Estos siete casos resistieron el proceso de eliminacion.</p>
-        <a href='https://serviciosdigitalespbt.systeme.io/f2eb8a92' target='_blank' style='display:inline-block; background:#ecc155; color:#000; font-family:Bebas Neue; font-size:20px; letter-spacing:0.1em; padding:16px 32px; text-decoration:none;'>👉 DESCARGAR EL INFORME GRATUITO</a>
+        <a href='https://serviciosdigitalespbt.systeme.io/f2eb8a92' target='_blank' style='display:inline-block; background:#ecc155; color:#000; font-family:Bebas Neue; font-size:20px; letter-spacing:0.1em; padding:16px 32px; text-decoration:none;'>DESCARGAR EL INFORME GRATUITO</a>
       </div>
     </section>"""
 
