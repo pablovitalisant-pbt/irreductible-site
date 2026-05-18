@@ -613,13 +613,18 @@ def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
         expl = md_to_html(fc.get("explicacion", ""))
         anomalia = md_to_html(fc.get("anomalia", ""))
         img_path = get_image_for_case(fc) or ""
-        cloud_url = _cloudinary_urls.get(fc["filename"], "")
-        if isinstance(cloud_url, dict):
-            cloud_url = cloud_url.get("url", "")
+        cloud_entry = _cloudinary_urls.get(fc["filename"], "")
+        cloud_url = cloud_entry
+        is_war_gov = False
+        if isinstance(cloud_entry, dict):
+            cloud_url = cloud_entry.get("url", "")
+            is_war_gov = cloud_entry.get("source") == "war.gov"
         img_html = ""
-        # Solo imagenes, no PDFs ni videos
         fc_ext = Path(fc["filename"]).suffix.lower()
-        if img_path and fc_ext in (".png", ".jpg"):
+        if is_war_gov:
+            img_html = f"""<p style='font-family:JetBrains Mono; font-size:11px; color:#9a907d; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;'>⚠ ESTE ARCHIVO SE SIRVE DESDE WAR.GOV/UFO. EL GOBIERNO DE EE.UU. PUEDE MODIFICAR O ELIMINAR ESTA URL EN CUALQUIER MOMENTO SIN PREVIO AVISO.</p>
+        <a href='{cloud_url}' target='_blank' style='display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:JetBrains Mono; font-size:11px; letter-spacing:0.15em; padding:16px; text-align:center; text-decoration:none; text-transform:uppercase;'>→ VER ARCHIVO ORIGINAL EN WAR.GOV/UFO</a>"""
+        elif img_path and fc_ext in (".png", ".jpg"):
             img_html = f'<img src="/{img_path}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
         elif cloud_url and fc_ext in (".png", ".jpg"):
             img_html = f'<img src="{cloud_url}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
