@@ -173,40 +173,38 @@ def get_image_for_case(caso):
     return None
 
 def get_media_block(caso):
-    """Genera bloque HTML con archivo fuente desde Cloudinary."""
+    """Genera bloque HTML con archivo fuente desde Cloudinary o war.gov."""
     fname = caso["filename"]
     ext = Path(fname).suffix.lower()
-    url = _cloudinary_urls.get(fname)
+    entry = _cloudinary_urls.get(fname)
 
-    if not url:
-        # Fallback: WAR.GOV/UFO
-        stem = Path(fname).stem
-        slug = stem.replace(" ", "-")
-        fallback_url = f"https://www.war.gov/UFO/#{slug}"
-        label = '<p class="font-metadata text-metadata-sm text-on-surface-variant uppercase mb-2">FUENTE: WAR.GOV/UFO</p>'
-        if ext in (".png", ".jpg"):
-            return f"""{label}
-    <a href="{fallback_url}" target="_blank" class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
-        elif ext == ".pdf":
-            return f"""{label}
-    <a href="{fallback_url}" target="_blank" style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
-      -> DESCARGAR PDF ORIGINAL
-    </a>"""
-        elif ext == ".mp4":
-            return f"""{label}
-    <a href="{fallback_url}" target="_blank" class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
+    if not entry:
         return ""
 
-    # URL de Cloudinary disponible
+    # Determinar URL y fuente
+    if isinstance(entry, dict):
+        url = entry["url"]
+        source = entry.get("source", "")
+    else:
+        url = entry
+        source = "cloudinary"
+
+    # Aviso para archivos servidos desde war.gov
+    war_gov_warning = ""
+    if source == "war.gov":
+        war_gov_warning = """<p style='font-family:JetBrains Mono; font-size:11px; color:#9a907d; margin-bottom:8px;'>
+    ⚠ ESTE ARCHIVO SE SIRVE DESDE WAR.GOV/UFO. EL GOBIERNO DE EE.UU. PUEDE MODIFICAR O ELIMINAR ESTA URL EN CUALQUIER MOMENTO SIN PREVIO AVISO.
+    </p>"""
+
     if ext == ".pdf":
-        return f"""<a href="{url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
+        return f"""{war_gov_warning}<a href="{url}" target="_blank" download style="display:block; background:#1c1b1b; border:1px solid #ecc155; color:#ecc155; font-family:'JetBrains Mono'; padding:16px; text-align:center; text-decoration:none;">
       -> DESCARGAR PDF ORIGINAL
     </a>"""
     elif ext in (".png", ".jpg"):
-        return f"""<img src="{url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
+        return f"""{war_gov_warning}<img src="{url}" style="width:100%; border:1px solid #4e4636;" alt="{fname}"/>
     <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR ARCHIVO ORIGINAL</a>"""
     elif ext == ".mp4":
-        return f"""<video controls style="width:100%; border:1px solid #4e4636;">
+        return f"""{war_gov_warning}<video controls style="width:100%; border:1px solid #4e4636;">
       <source src="{url}" type="video/mp4"/>
     </video>
     <a href="{url}" download class="inline-block mt-3 font-metadata text-metadata text-primary uppercase hover:opacity-80 transition-opacity">DESCARGAR VIDEO ORIGINAL</a>"""
