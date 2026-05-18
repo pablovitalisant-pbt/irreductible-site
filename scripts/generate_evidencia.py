@@ -473,6 +473,252 @@ tailwind.config = {{
     return OUTPUT_DIR / f"{slug}.html", html
 
 
+# --- Eventos Agrupados ---
+
+# Config: evento -> {"lead": filename, "name": nombre, "frames": [lista ordenada],
+#           "phases": [{"label": ..., "frames": [desde, hasta]}]}
+EVENTS = {
+    "FBI-Photo-B20.pdf": {
+        "name": "FBI FLIR — Nochevieja 1999",
+        "frames": [f"FBI-Photo-B{i}.pdf" for i in range(1, 25)],
+        "phases": [
+            {"label": "FASE 1 — OBJETO ESTRUCTURADO (18:10:00–18:10:06)", "range": (1, 2)},
+            {"label": "FASE 2 — PUNTO ÚNICO, TRACKING ACTIVO (18:10:12–18:11:12)", "range": (3, 12)},
+            {"label": "FASE 3 — DOS OBJETOS SIMULTÁNEOS (18:18:53–18:22:12)", "range": (13, 24)},
+        ],
+    },
+}
+
+def get_event_lead(filename):
+    """Si el archivo es lead de un evento, devuelve la config del evento."""
+    return EVENTS.get(filename)
+
+def get_event_for_frame(filename):
+    """Si el archivo pertenece a un evento, devuelve (lead, config)."""
+    for lead, cfg in EVENTS.items():
+        if filename in cfg["frames"]:
+            return lead, cfg
+    return None, None
+
+def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
+    """Genera pagina HTML agrupada para un evento con timeline y todos los frames."""
+    slug = slugify(lead_caso["filename"])
+    used_slugs.add(slug)
+
+    # Buscar todos los casos del evento en all_casos
+    casos_map = {c["filename"]: c for c in all_casos}
+    frames_casos = []
+    for fname in event_cfg["frames"]:
+        if fname in casos_map:
+            frames_casos.append(casos_map[fname])
+        else:
+            frames_casos.append({"filename": fname, "score": 0, "categoria": "?", "fuente": "", "tipo": "", "tags": "", "observacion": "", "explicacion": "", "anomalia": ""})
+
+    # SEO
+    desc_raw = lead_caso.get("observacion", "")[:160].replace('"', '&quot;')
+    title_raw = f"{event_cfg['name']} — Análisis de 24 fotogramas"
+
+    score_labels = {1: "CONVENCIONAL", 2: "PROBABLE CONVENCIONAL", 3: "INTERMEDIO", 4: "ANÓMALO", 5: "ALTAMENTE ANÓMALO"}
+    agency = "FBI"
+    era = "31/12/1999"
+
+    # Timeline HTML
+    timeline_html = ""
+    for ph in event_cfg["phases"]:
+        r = ph["range"]
+        timeline_html += f"""
+        <div class="mb-6 p-4 border border-outline-variant bg-surface-container-low">
+          <p class="font-headline-sm text-headline-sm text-primary uppercase mb-3">{ph['label']}</p>
+          <div class="flex flex-wrap gap-2">"""
+        for i in range(r[0], r[1] + 1):
+            fname = f"FBI-Photo-B{i}.pdf"
+            score = casos_map.get(fname, {}).get("score", 0)
+            color = {5: "text-primary", 4: "text-primary", 3: "text-secondary", 2: "text-on-surface-variant", 1: "text-on-surface-variant", 0: "text-on-surface-variant"}.get(score, "text-on-surface-variant")
+            border = "border-primary" if score >= 4 else "border-outline-variant"
+            timeline_html += f"""
+            <a href="#frame-b{i}" class="font-metadata text-metadata-sm {color} border {border} px-2 py-1 hover:bg-surface-container-high transition-colors">B{i} █{score}/5</a>"""
+        timeline_html += """
+          </div>
+        </div>"""
+
+    # Frames HTML
+    frames_html = ""
+    for fc in frames_casos:
+        num = fc["filename"].replace("FBI-Photo-B", "").replace(".pdf", "")
+        score = fc.get("score", 0)
+        obs = md_to_html(fc.get("observacion", ""))
+        expl = md_to_html(fc.get("explicacion", ""))
+        anomalia = md_to_html(fc.get("anomalia", ""))
+        img_path = get_image_for_case(fc) or ""
+        cloud_url = _cloudinary_urls.get(fc["filename"], "")
+        if isinstance(cloud_url, dict):
+            cloud_url = cloud_url.get("url", "")
+        img_html = ""
+        if img_path:
+            img_html = f'<img src="/{img_path}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
+        elif cloud_url:
+            img_html = f'<img src="{cloud_url}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
+
+        frames_html += f"""
+      <section id="frame-b{num}" class="border border-outline-variant bg-surface-container-lowest p-6 mb-4">
+        <div class="flex justify-between items-start mb-4">
+          <h4 class="font-headline-sm text-headline-sm text-primary uppercase">Fotograma B{num}</h4>
+          <span class="font-metadata text-metadata text-secondary">{score_labels.get(score, "?")} — {fc.get("categoria", "?")}</span>
+        </div>
+        <p class="font-metadata text-metadata-sm text-on-surface-variant mb-2">FUENTE: {fc.get("fuente", "")}</p>
+        {img_html}
+        <div class="space-y-4">
+          <div>
+            <h6 class="font-headline-sm text-headline-sm text-secondary mb-2 uppercase">Observacion</h6>
+            {obs}
+          </div>
+          <div>
+            <h6 class="font-headline-sm text-headline-sm text-error mb-2 uppercase">Explicacion intentada</h6>
+            {expl}
+          </div>
+          <div>
+            <h6 class="font-headline-sm text-headline-sm text-primary mb-2 uppercase">Anomalia residual</h6>
+            {anomalia}
+          </div>
+        </div>
+      </section>"""
+
+    # CTA block (same as regular pages)
+    cta_block = """<!-- CTA -->
+    <section class="max-w-4xl mx-auto px-8 py-12 border-t border-outline-variant">
+      <div class="relative border border-primary bg-surface-container-lowest p-8 text-center">
+        <div class="corner-bracket bracket-tl"></div>
+        <div class="corner-bracket bracket-tr"></div>
+        <div class="corner-bracket bracket-bl"></div>
+        <div class="corner-bracket bracket-br"></div>
+        <p style='font-family:JetBrains Mono; font-size:11px; color:#d1c5b0; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:8px;'>ANALISIS COMPLETO DEL CORPUS PURSUE</p>
+        <h2 style='font-family:Bebas Neue; font-size:32px; color:#ecc155; margin-bottom:4px;'>151 CASOS ENCONTRARON UNA EXPLICACION CONVENCIONAL.</h2>
+        <h2 style='font-family:Bebas Neue; font-size:32px; color:#ecc155; margin-bottom:16px;'>7 NO.</h2>
+        <p style='font-family:Inter; font-size:16px; color:#e5e2e1; line-height:1.6; margin-bottom:8px;'>Analice los 158 archivos UAP desclasificados por el gobierno e intente descartarlos utilizando errores de percepcion, meteorologia, fallas de sensores y explicaciones convencionales.</p>
+        <p style='font-family:Inter; font-size:16px; color:#e5e2e1; margin-bottom:8px;'>La mayoria colapso.</p>
+        <p style='font-family:Inter; font-size:16px; color:#e5e2e1; margin-bottom:24px;'>Estos siete casos resistieron el proceso de eliminacion.</p>
+        <a href='https://serviciosdigitalespbt.systeme.io/f2eb8a92' target='_self' style='display:inline-block; background:#ecc155; color:#000; font-family:Bebas Neue; font-size:20px; letter-spacing:0.1em; padding:16px 32px; text-decoration:none;'>DESCARGAR EL INFORME GRATUITO</a>
+      </div>
+    </section>"""
+
+    html = f"""<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{title_raw} | IRREDUCTIBLE</title>
+<meta name="description" content="{desc_raw}"/>
+<meta property="og:title" content="{title_raw} | IRREDUCTIBLE"/>
+<meta property="og:description" content="{desc_raw}"/>
+<meta property="og:url" content="https://irreductible.site/evidencia/{slug}"/>
+<meta property="og:type" content="article"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  .corner-bracket {{ position: absolute; width: 12px; height: 12px; border-color: #ecc155; z-index: 10; }}
+  .bracket-tl {{ top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }}
+  .bracket-tr {{ top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }}
+  .bracket-bl {{ bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }}
+  .bracket-br {{ bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }}
+</style>
+<script id="tailwind-config">
+tailwind.config = {{
+  darkMode: "class",
+  theme: {{
+    extend: {{
+      colors: {{
+        "background": "#131313", "surface": "#131313", "surface-container-low": "#1c1b1b",
+        "surface-container-lowest": "#0e0e0e", "surface-container-high": "#2a2a2a",
+        "outline-variant": "#4e4636", "outline": "#9a907d", "on-background": "#e5e2e1",
+        "on-surface": "#e5e2e1", "on-surface-variant": "#d1c5b0",
+        "primary": "#ecc155", "primary-container": "#ecc155", "on-primary": "#3e2e00",
+        "secondary": "#98ccf6", "error": "#ffb4ab"
+      }},
+      fontFamily: {{
+        "headline-lg": ["Bebas Neue"], "headline-md": ["Bebas Neue"], "headline-sm": ["Bebas Neue"],
+        "body-md": ["Inter"], "body-lg": ["Inter"], "metadata": ["JetBrains Mono"], "metadata-sm": ["JetBrains Mono"]
+      }},
+      fontSize: {{
+        "headline-lg": ["48px", {{"lineHeight": "1.1", "letterSpacing": "0.05em"}}],
+        "headline-md": ["32px", {{"lineHeight": "1.2", "letterSpacing": "0.05em"}}],
+        "headline-sm": ["24px", {{"lineHeight": "1.2", "letterSpacing": "0.05em"}}],
+        "body-lg": ["18px", {{"lineHeight": "160%"}}],
+        "body-md": ["16px", {{"lineHeight": "160%"}}],
+        "metadata": ["12px", {{"lineHeight": "1.4", "letterSpacing": "0.15em"}}],
+        "metadata-sm": ["10px", {{"lineHeight": "1.4", "letterSpacing": "0.15em"}}]
+      }},
+      borderRadius: {{ "DEFAULT": "0px" }}
+    }}
+  }}
+}}
+</script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+
+<nav class="border-b border-outline-variant px-8 py-4 flex justify-between items-center">
+  <a href="/" class="font-headline-sm text-headline-sm text-primary uppercase tracking-widest">IRREDUCTIBLE</a>
+</nav>
+
+<div class="max-w-4xl mx-auto px-8 pt-8">
+  <p class="font-metadata text-metadata text-on-surface-variant uppercase">
+    <a href="/" class="hover:text-primary transition-colors">INICIO</a>
+    <span class="mx-2">/</span>
+    <a href="/evidencia" class="hover:text-primary transition-colors">EVIDENCIA</a>
+    <span class="mx-2">/</span>
+    <span class="text-primary">{lead_caso["filename"]}</span>
+  </p>
+</div>
+
+<section class="max-w-4xl mx-auto px-8 pt-8">
+  <div class="mb-8">
+    <h5 class="font-metadata text-metadata text-primary uppercase mb-1">// DOSSIER CASE_{index:02d} — EVENTO AGRUPADO</h5>
+    <h1 class="font-headline-lg text-headline-lg text-on-background uppercase">{event_cfg["name"]}</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4">24 fotogramas FLIR capturados por el FBI entre las 18:10:00 y las 18:22:12 del 31 de diciembre de 1999. Una secuencia de 12 minutos que muestra la evolucion de un objeto — desde una morfologia estructurada identificable hasta la aparicion de dos objetos simultaneos que resisten el descarte convencional.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-surface-container-low border border-outline-variant p-4">
+      <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Agencia</p>
+      <p class="font-metadata text-metadata text-primary">FBI</p>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant p-4">
+      <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Epoca</p>
+      <p class="font-metadata text-metadata text-primary">31/12/1999</p>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant p-4">
+      <p class="font-metadata text-metadata-sm text-on-surface-variant uppercase">Fotogramas</p>
+      <p class="font-metadata text-metadata text-primary">24 (B1–B24)</p>
+    </div>
+  </div>
+</section>
+
+{cta_block}
+
+<section class="max-w-4xl mx-auto px-8 py-12">
+  <h2 class="font-headline-md text-headline-md text-primary uppercase mb-8">Linea de tiempo — 3 fases</h2>
+  {timeline_html}
+</section>
+
+<section class="max-w-4xl mx-auto px-8 pb-12">
+  <h2 class="font-headline-md text-headline-md text-primary uppercase mb-8">Analisis fotograma por fotograma</h2>
+  {frames_html}
+</section>
+
+{cta_block}
+
+<footer class="border-t border-outline-variant px-8 py-8 mt-8">
+  <div class="max-w-4xl mx-auto flex justify-between items-center">
+    <p class="font-metadata text-metadata text-on-surface-variant uppercase">IRREDUCTIBLE &copy; 2026 PABLO BRAVO</p>
+    <p class="font-metadata text-metadata text-on-surface-variant uppercase">CORPUS PURSUE — DEPARTAMENTO DE GUERRA EE.UU.</p>
+  </div>
+</footer>
+
+</body>
+</html>"""
+
+    return OUTPUT_DIR / f"{slug}.html", html
+
+
 # --- Sitemap y Robots ---
 
 def generate_sitemap(slugs):
@@ -524,12 +770,32 @@ def main():
 
     used_slugs = set()
     generated = 0
+    dossier_index = 0
     for i, caso in enumerate(casos):
         try:
-            output_path, html = generate_page(caso, i + 1, used_slugs)
-            output_path.write_text(html, encoding="utf-8")
-            generated += 1
-            print(f"  OK: {caso['filename']} -> {output_path.name}")
+            fname = caso["filename"]
+
+            # Evento agrupado
+            lead_cfg = get_event_lead(fname)
+            _, member_cfg = get_event_for_frame(fname)
+
+            if lead_cfg:
+                # Es el lead: generar pagina agrupada
+                dossier_index += 1
+                output_path, html = generate_event_page(caso, casos, lead_cfg, dossier_index, used_slugs)
+                output_path.write_text(html, encoding="utf-8")
+                generated += 1
+                print(f"  OK: {fname} -> {output_path.name} (EVENTO: {lead_cfg['name']})")
+            elif member_cfg:
+                # Frame de un evento: saltar (ya incluido en pagina agrupada)
+                continue
+            else:
+                # Pagina normal
+                dossier_index += 1
+                output_path, html = generate_page(caso, dossier_index, used_slugs)
+                output_path.write_text(html, encoding="utf-8")
+                generated += 1
+                print(f"  OK: {fname} -> {output_path.name}")
         except Exception as e:
             print(f"  ERROR: {caso['filename']} — {e}")
 
