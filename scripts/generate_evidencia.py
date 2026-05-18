@@ -834,33 +834,38 @@ def main():
     used_slugs = set()
     generated = 0
     dossier_index = 0
+
+    # Primero: generar las 158 paginas individuales
     for i, caso in enumerate(casos):
         try:
-            fname = caso["filename"]
-
-            # Evento agrupado
-            lead_cfg = get_event_lead(fname)
-            _, member_cfg = get_event_for_frame(fname)
-
-            if lead_cfg:
-                # Es el lead: generar pagina agrupada
-                dossier_index += 1
-                output_path, html = generate_event_page(caso, casos, lead_cfg, dossier_index, used_slugs)
-                output_path.write_text(html, encoding="utf-8")
-                generated += 1
-                print(f"  OK: {fname} -> {output_path.name} (EVENTO: {lead_cfg['name']})")
-            elif member_cfg:
-                # Frame de un evento: saltar (ya incluido en pagina agrupada)
-                continue
-            else:
-                # Pagina normal
-                dossier_index += 1
-                output_path, html = generate_page(caso, dossier_index, used_slugs)
-                output_path.write_text(html, encoding="utf-8")
-                generated += 1
-                print(f"  OK: {fname} -> {output_path.name}")
+            dossier_index += 1
+            output_path, html = generate_page(caso, dossier_index, used_slugs)
+            output_path.write_text(html, encoding="utf-8")
+            generated += 1
+            print(f"  OK: {caso['filename']} -> {output_path.name}")
         except Exception as e:
             print(f"  ERROR: {caso['filename']} — {e}")
+
+    # Luego: generar las paginas de evento agrupadas (slugs con sufijo -evento)
+    for lead_fname, event_cfg in EVENTS.items():
+        try:
+            lead_caso = next((c for c in casos if c["filename"] == lead_fname), None)
+            if not lead_caso:
+                print(f"  SKIP EVENTO {event_cfg['name']}: lead {lead_fname} no encontrado")
+                continue
+            base_slug = slugify(lead_fname)
+            event_slug = f"{base_slug}-evento"
+            used_slugs.add(event_slug)
+            output_path, html = generate_event_page(lead_caso, casos, event_cfg, 0, used_slugs)
+            # Corregir slug en el HTML (generate_event_page usa slugify normal)
+            html = html.replace(f'/{base_slug}"', f'/{event_slug}"')
+            html = html.replace(f'/{base_slug}\'', f'/{event_slug}\'')
+            output_path = OUTPUT_DIR / f"{event_slug}.html"
+            output_path.write_text(html, encoding="utf-8")
+            generated += 1
+            print(f"  OK: {lead_fname} -> {output_path.name} (EVENTO: {event_cfg['name']})")
+        except Exception as e:
+            print(f"  ERROR EVENTO {lead_fname} — {e}")
 
     print(f"\nGeneradas {generated}/{len(casos)} paginas en evidencia/")
 
