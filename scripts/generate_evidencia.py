@@ -617,9 +617,11 @@ def generate_event_page(lead_caso, all_casos, event_cfg, index, used_slugs):
         if isinstance(cloud_url, dict):
             cloud_url = cloud_url.get("url", "")
         img_html = ""
-        if img_path:
+        # Solo imagenes, no PDFs ni videos
+        fc_ext = Path(fc["filename"]).suffix.lower()
+        if img_path and fc_ext in (".png", ".jpg"):
             img_html = f'<img src="/{img_path}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
-        elif cloud_url:
+        elif cloud_url and fc_ext in (".png", ".jpg"):
             img_html = f'<img src="{cloud_url}" alt="B{num}" class="w-full border border-outline-variant mb-4"/>'
 
         frames_html += f"""
