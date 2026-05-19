@@ -1,8 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 import { Resend } from 'resend';
 import { RateLimiter } from './_lib/rate-limiter.js';
+import { validate as validateEmail } from './_lib/email-validator.js';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const rateLimiter = new RateLimiter({ maxRequests: 5, windowMs: 15 * 60 * 1000 });
 
 function getClientIP(req) {
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
   }
 
   const email = (body.email || '').trim().toLowerCase();
-  if (!email || !EMAIL_RE.test(email)) {
+  if (!email || !validateEmail(email).valid) {
     return res.status(400).json({ error: 'Email inválido' });
   }
 

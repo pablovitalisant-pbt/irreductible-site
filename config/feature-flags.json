@@ -12,6 +12,7 @@
     "fase2_email_template_editor": true,
     "fase2_webhooks_metrics": true,
     "fase2_source_tag": true,
-    "fase2_onboarding_cron": true
+    "fase2_onboarding_cron": true,
+    "fase2_email_validation": true
   }
 }
