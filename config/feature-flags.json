@@ -9,6 +9,7 @@
     "slice_6_unsubscribe_link": true,
     "fase2_rate_limiting": true,
     "fase2_admin_list": true,
-    "fase2_email_template_editor": true
+    "fase2_email_template_editor": true,
+    "fase2_webhooks_metrics": true
   }
 }
