@@ -104,6 +104,41 @@ function editorForm(template) {
 </form>`;
 }
 
+function onboardingEditor(steps) {
+  let rows = '';
+  for (const s of steps) {
+    rows += `<tr>
+      <td>${s.delay_hours}h</td>
+      <td>${escapeHtml(s.subject)}</td>
+      <td style="color:${s.active ? '#ecc155' : '#9a907d'}">${s.active ? 'ACTIVO' : 'INACTIVO'}</td>
+    </tr>`;
+  }
+
+  return `<hr style="border:1px solid #4e4636;margin:32px 0">
+<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">Secuencia de Onboarding</h2>
+${steps.length > 0 ? `<table style="margin-bottom:24px">
+  <thead><tr><th>Delay</th><th>Asunto</th><th>Estado</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>` : '<p style="color:#9a907d;margin-bottom:24px">Sin emails de onboarding. Agregá el primero.</p>'}
+<form method="POST" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
+  <input type="hidden" name="action" value="save_onboarding">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Delay (horas tras suscripción)</label>
+  <input type="number" name="delay_hours" value="24" min="1" required
+         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px;width:100px">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Asunto</label>
+  <input type="text" name="subject" required
+         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholder: {'{{'}unsubscribe_link{'}}'})</label>
+  <textarea name="html" rows="10" required
+            style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical"></textarea>
+  <button type="submit"
+          style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
+    AGREGAR EMAIL
+  </button>
+</form>
+<p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a907d;margin-top:16px">CRON externo: configurar en cron-job.org — POST a /api/cron/send-onboarding con header x-api-key cada hora.</p>`;
+}
+
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -131,6 +166,27 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Body inválido' });
       }
 
+      const action = (body.action || '').trim();
+
+      if (action === 'save_onboarding') {
+        const subject = (body.subject || '').trim();
+        const html = (body.html || '').trim();
+        const delayHours = parseInt(body.delay_hours, 10);
+        const active = body.active !== 'false';
+
+        if (!subject || !html || isNaN(delayHours) || delayHours < 1) {
+          return res.status(400).json({ error: 'Faltan campos: subject, html, delay_hours' });
+        }
+
+        await sql`
+          INSERT INTO onboarding_emails (subject, html, delay_hours, active, updated_at)
+          VALUES (${subject}, ${html}, ${delayHours}, ${active}, NOW())
+        `;
+
+        return res.status(200).json({ ok: true });
+      }
+
+      // save_template (default)
       const name = (body.name || '').trim();
       const subject = (body.subject || '').trim();
       const html = (body.html || '').trim();
@@ -152,13 +208,14 @@ export default async function handler(req, res) {
       return res.status(405).send('Method not allowed');
     }
 
-    const [subscribers, templateRows] = await Promise.all([
+    const [subscribers, templateRows, onboardingSteps] = await Promise.all([
       sql`SELECT email, source, status, created_at, lead_magnet_sent_at FROM subscribers ORDER BY created_at DESC`,
       sql`SELECT subject, html FROM email_templates WHERE name = 'lead_magnet'`,
+      sql`SELECT id, subject, delay_hours, active FROM onboarding_emails ORDER BY delay_hours ASC`,
     ]);
 
     const template = templateRows[0] || null;
-    const content = renderTable(subscribers) + editorForm(template);
+    const content = renderTable(subscribers) + editorForm(template) + onboardingEditor(onboardingSteps);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(htmlPage(content));
