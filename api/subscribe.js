@@ -24,6 +24,25 @@ function parseBody(req) {
   });
 }
 
+export async function getLeadMagnetTemplate(sql, leadMagnetUrl, unsubscribeToken, siteUrl) {
+  try {
+    const rows = await sql`SELECT subject, html FROM email_templates WHERE name = 'lead_magnet'`;
+    if (rows.length > 0) {
+      const unsubscribeLink = `${siteUrl}/api/unsubscribe?token=${unsubscribeToken}`;
+      return {
+        subject: rows[0].subject,
+        html: rows[0].html
+          .replace(/\{\{lead_magnet_url\}\}/g, leadMagnetUrl)
+          .replace(/\{\{unsubscribe_link\}\}/g, unsubscribeLink),
+      };
+    }
+  } catch { /* tabla no existe aún, usar fallback */ }
+  return {
+    subject: 'PURSUE — Declassified Dossier',
+    html: leadMagnetEmail(leadMagnetUrl, unsubscribeToken, siteUrl),
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -65,13 +84,17 @@ export default async function handler(req, res) {
     }
 
     const subscriber = result[0];
+    const template = await getLeadMagnetTemplate(
+      sql, process.env.LEAD_MAGNET_URL, subscriber.unsubscribe_token, process.env.SITE_URL
+    );
+
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
       from: process.env.RESEND_FROM,
       to: email,
-      subject: 'PURSUE — Declassified Dossier',
-      html: leadMagnetEmail(process.env.LEAD_MAGNET_URL, subscriber.unsubscribe_token, process.env.SITE_URL),
+      subject: template.subject,
+      html: template.html,
     });
 
     await sql`

@@ -68,16 +68,52 @@ function renderTable(subscribers) {
 </table>`;
 }
 
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body) return resolve(req.body);
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(JSON.parse(data || '{}')); }
+      catch { reject(new Error('JSON inválido')); }
+    });
+    req.on('error', reject);
+  });
+}
+
+function editorForm(template) {
+  const subject = template?.subject || '';
+  const html = template?.html || '';
+  return `<hr style="border:1px solid #4e4636;margin:32px 0">
+<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">Editor de Email de Bienvenida</h2>
+<form method="POST" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
+  <input type="hidden" name="name" value="lead_magnet">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Asunto</label>
+  <input type="text" name="subject" value="${escapeHtml(subject)}" required
+         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholders: {'{{'}lead_magnet_url{'}}'}, {'{{'}unsubscribe_link{'}}'})</label>
+  <textarea name="html" rows="16" required
+            style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical">${escapeHtml(html)}</textarea>
+  <button type="submit"
+          style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
+    GUARDAR TEMPLATE
+  </button>
+</form>`;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).send('Method not allowed');
-  }
-
   if (!checkAuth(req)) {
+    if (req.method === 'POST') {
+      return res.status(401).json({ error: 'No autorizado' });
+    }
     res.setHeader('WWW-Authenticate', 'Basic realm="IRREDUCTIBLE Admin"');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(401).send(htmlPage('<p>Acceso restringido.</p>'));
@@ -85,16 +121,49 @@ export default async function handler(req, res) {
 
   try {
     const sql = neon(process.env.DATABASE_URL);
-    const subscribers = await sql`
-      SELECT email, status, created_at, lead_magnet_sent_at
-      FROM subscribers
-      ORDER BY created_at DESC
-    `;
+
+    if (req.method === 'POST') {
+      let body;
+      try { body = await parseBody(req); } catch {
+        return res.status(400).json({ error: 'Body inválido' });
+      }
+
+      const name = (body.name || '').trim();
+      const subject = (body.subject || '').trim();
+      const html = (body.html || '').trim();
+
+      if (!name || !subject || !html) {
+        return res.status(400).json({ error: 'Faltan campos: name, subject, html' });
+      }
+
+      await sql`
+        INSERT INTO email_templates (name, subject, html, updated_at)
+        VALUES (${name}, ${subject}, ${html}, NOW())
+        ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html = EXCLUDED.html, updated_at = NOW()
+      `;
+
+      return res.status(200).json({ ok: true });
+    }
+
+    if (req.method !== 'GET') {
+      return res.status(405).send('Method not allowed');
+    }
+
+    const [subscribers, templateRows] = await Promise.all([
+      sql`SELECT email, status, created_at, lead_magnet_sent_at FROM subscribers ORDER BY created_at DESC`,
+      sql`SELECT subject, html FROM email_templates WHERE name = 'lead_magnet'`,
+    ]);
+
+    const template = templateRows[0] || null;
+    const content = renderTable(subscribers) + editorForm(template);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(200).send(htmlPage(renderTable(subscribers)));
+    return res.status(200).send(htmlPage(content));
   } catch (err) {
     console.error('admin error:', err.message);
+    if (req.method === 'POST') {
+      return res.status(500).json({ error: 'Error interno' });
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(500).send(htmlPage('<p>Error al cargar los datos.</p>'));
   }
