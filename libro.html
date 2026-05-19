@@ -230,7 +230,7 @@
 <header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4">
     <div class="font-headline-md text-headline-md tracking-widest text-on-surface">IRREDUCTIBLE</div>
     <div class="hidden md:flex gap-8 items-center">
-        <a href="https://serviciosdigitalespbt.systeme.io/d16a819d"><button class="bg-primary text-on-primary px-6 py-2 font-label-caps text-label-caps tracking-widest hover:brightness-110 transition-all active:scale-95">ACCEDE A LA PRE-VENTA</button></a>
+        <button data-action="open-waitlist-modal" class="bg-primary text-on-primary px-6 py-2 font-label-caps text-label-caps tracking-widest hover:brightness-110 transition-all active:scale-95 cursor-pointer">UNIRME A LA LISTA DE ESPERA</button>
     </div>
 </header>
 
@@ -280,9 +280,9 @@
                     <p class="text-on-surface font-bold">La pregunta es: ¿Qué queda cuando las explicaciones convencionales empiezan a agotarse?</p>
                 </div>
                 <div class="pt-8 pb-20">
-                    <a href="https://serviciosdigitalespbt.systeme.io/d16a819d"><button class="cta-scan bg-primary text-on-primary px-10 py-4 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest">
-                        ACCEDE A LA PRE-VENTA
-                    </button></a>
+                    <button data-action="open-waitlist-modal" class="cta-scan bg-primary text-on-primary px-10 py-4 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest cursor-pointer">
+                        UNIRME A LA LISTA DE ESPERA
+                    </button>
                 </div>
             </div>
         </div>
@@ -636,9 +636,9 @@
         </div>
         <p class="font-body-lg text-on-surface-variant italic stagger-child">Léelo y decide por ti mismo qué explicación sobrevive cuando todas las demás empiezan a caer.</p>
         <div class="flex flex-col items-center gap-8 pt-8 stagger-child">
-            <a href="https://serviciosdigitalespbt.systeme.io/d16a819d"><button class="cta-scan bg-primary text-on-primary w-full max-w-md py-6 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest" style="padding-left:32px;padding-right:32px;">
-                ACCEDE A LA PRE-VENTA
-            </button></a>
+            <button data-action="open-waitlist-modal" class="cta-scan bg-primary text-on-primary w-full max-w-md py-6 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest cursor-pointer" style="padding-left:32px;padding-right:32px;">
+                UNIRME A LA LISTA DE ESPERA
+            </button>
             <div class="space-y-2">
                 <p class="font-label-caps text-label-caps text-outline">ESCRITO POR</p>
                 <p class="font-headline-md text-headline-md text-on-surface tracking-[0.4em]">PABLO BRAVO</p>
@@ -733,6 +733,97 @@
         nimitzObserver.observe(bracket);
     });
 
+})();
+</script>
+<!-- WAITLIST MODAL -->
+<div id="waitlist-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.85);">
+  <div class="relative w-[90vw] max-w-md bg-[#131313] border border-outline-variant p-8">
+    <button id="waitlist-modal-close" class="absolute top-3 right-3 text-outline hover:text-on-surface font-data-mono text-xl leading-none cursor-pointer">&times;</button>
+    <h2 class="font-headline-md text-headline-md text-primary text-center mb-6 uppercase">LISTA DE ESPERA</h2>
+    <form id="waitlist-form" class="flex flex-col items-center gap-4">
+      <input type="hidden" name="source" value="landing_libro">
+      <input type="email" id="waitlist-email" required placeholder="TU EMAIL"
+             class="w-full bg-transparent border border-outline-variant px-4 py-3
+                    text-on-surface font-body-md text-center
+                    placeholder:text-outline focus:border-primary focus:outline-none">
+      <button type="submit"
+              class="w-full bg-primary text-on-primary px-8 py-4
+                     font-headline-md text-headline-md
+                     transition-colors duration-150 disabled:opacity-50 uppercase tracking-widest">
+        [ UNIRME A LA LISTA DE ESPERA ]
+      </button>
+      <p id="waitlist-msg" class="font-data-mono text-sm hidden text-center"></p>
+    </form>
+  </div>
+</div>
+<script>
+(function() {
+  var modal = document.getElementById('waitlist-modal');
+  var form = document.getElementById('waitlist-form');
+  var emailInput = document.getElementById('waitlist-email');
+  var msgEl = document.getElementById('waitlist-msg');
+  var submitBtn = form.querySelector('button[type="submit"]');
+
+  function showModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  function hideModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); form.reset(); msgEl.classList.add('hidden'); }
+
+  document.querySelectorAll("[data-action='open-waitlist-modal']").forEach(function(btn) {
+    btn.addEventListener('click', showModal);
+  });
+
+  document.getElementById('waitlist-modal-close').addEventListener('click', hideModal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) hideModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideModal(); });
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = emailInput.value.trim();
+    if (!email) return;
+
+    var sourceInput = form.querySelector('[name="source"]');
+    var source = sourceInput ? sourceInput.value : '';
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '[ ENVIANDO... ]';
+    msgEl.classList.add('hidden');
+
+    try {
+      var res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, source: source })
+      });
+      var data = await res.json();
+
+      msgEl.classList.remove('hidden');
+
+      if (res.ok && data.ok) {
+        msgEl.className = 'font-data-mono text-sm text-primary text-center';
+        msgEl.textContent = 'Te avisaremos cuando el libro esté disponible.';
+        submitBtn.textContent = '[ REGISTRADO ]';
+        setTimeout(hideModal, 3000);
+      } else if (res.status === 429) {
+        msgEl.className = 'font-data-mono text-sm text-center';
+        msgEl.style.color = '#ecc155';
+        msgEl.textContent = 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '[ UNIRME A LA LISTA DE ESPERA ]';
+      } else {
+        msgEl.className = 'font-data-mono text-sm text-center';
+        msgEl.style.color = '#ffb4ab';
+        msgEl.textContent = data.error || 'Error. Intenta de nuevo.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '[ UNIRME A LA LISTA DE ESPERA ]';
+      }
+    } catch (err) {
+      msgEl.classList.remove('hidden');
+      msgEl.className = 'font-data-mono text-sm text-center';
+      msgEl.style.color = '#ffb4ab';
+      msgEl.textContent = 'Error de conexión. Intenta de nuevo.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = '[ UNIRME A LA LISTA DE ESPERA ]';
+    }
+  });
 })();
 </script>
 </body>
