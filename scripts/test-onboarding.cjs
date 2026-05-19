@@ -84,7 +84,7 @@ function check(name, condition) {
   const { default: adminHandler } = await import('../api/admin.js');
   const adminRes = { _status: 200, _body: '', _headers: {}, status(c) { this._status = c; return this; }, setHeader(k, v) { this._headers[k] = v; return this; }, send(b) { this._body = b; return this; } };
   await adminHandler({ method: 'GET', headers: { authorization: authHeader } }, adminRes);
-  check('Admin muestra editor de secuencia', adminRes._body.includes('onboarding_emails') || adminRes._body.includes('Secuencia'));
+  check('Admin muestra editor de secuencia', adminRes._body.includes('onboarding_emails') || adminRes._body.includes('SECUENCIA'));
 
   console.log(`\n${passed} pasaron, ${failed} fallaron`);
   if (failed > 0) process.exit(1);

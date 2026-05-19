@@ -9,7 +9,7 @@ function checkAuth(req) {
   return user === 'admin' && pass === process.env.ADMIN_PASSWORD;
 }
 
-function htmlPage(content) {
+function htmlPage(activeTab, content) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,7 +21,8 @@ function htmlPage(content) {
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <style>
   body { background:#131313; color:#e5e2e1; font-family:Inter,sans-serif; margin:0; padding:24px; }
-  h1 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#ecc155; margin:0 0 24px; letter-spacing:0.05em; }
+  h1 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#ecc155; margin:0 0 8px; letter-spacing:0.05em; }
+  .h1-sub { font-family:'JetBrains Mono',monospace; font-size:11px; color:#9a907d; margin:0 0 20px; letter-spacing:0.1em; }
   table { width:100%; border-collapse:collapse; font-size:14px; }
   th { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#ecc155; text-align:left; padding:12px 16px; border-bottom:2px solid #4e4636; letter-spacing:0.05em; text-transform:uppercase; }
   td { padding:12px 16px; border-bottom:1px solid #2a2a2a; font-family:'JetBrains Mono',monospace; font-size:12px; }
@@ -31,6 +32,12 @@ function htmlPage(content) {
   .container { max-width:960px; margin:0 auto; }
   .count { font-family:'JetBrains Mono',monospace; font-size:12px; color:#9a907d; margin-bottom:16px; }
   a { color:#98ccf6; }
+  .tab-bar { display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid #4e4636; }
+  .tab-btn { background:transparent; border:none; color:#9a907d; padding:12px 24px; font-family:'Bebas Neue',sans-serif; font-size:16px; cursor:pointer; letter-spacing:0.05em; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; text-transform:uppercase; }
+  .tab-btn.active { color:#c9a84c; border-bottom-color:#c9a84c; }
+  .tab-btn:hover { color:#e5e2e1; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
   .ql-toolbar.ql-snow { border-color:#4e4636; background:#1c1b1b; }
   .ql-container.ql-snow { border-color:#4e4636; background:#131313; color:#e5e2e1; font-family:Inter,sans-serif; font-size:14px; min-height:200px; }
   .ql-editor { min-height:200px; }
@@ -38,15 +45,40 @@ function htmlPage(content) {
   .ql-snow .ql-fill { fill:#9a907d; }
   .ql-snow .ql-picker { color:#9a907d; }
   .ql-snow .ql-picker-options { background:#1c1b1b; border-color:#4e4636; }
+  select, input:not([type="hidden"]), textarea { background:transparent; border:1px solid #4e4636; color:#e5e2e1; padding:10px; font-family:Inter,sans-serif; font-size:14px; }
+  select:focus, input:focus, textarea:focus { border-color:#c9a84c; outline:none; }
+  select option { background:#1c1b1b; color:#e5e2e1; }
+  .btn-save { background:#ecc155; color:#131313; border:none; padding:12px 24px; font-family:'Bebas Neue',sans-serif; font-size:16px; cursor:pointer; letter-spacing:0.05em; align-self:flex-start; text-transform:uppercase; }
+  .btn-save:hover { filter:brightness(1.1); }
+  label { font-family:'JetBrains Mono',monospace; font-size:12px; color:#d1c5b0; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Panel Admin — Suscriptores</h1>
+  <h1>PANEL ADMIN — IRREDUCTIBLE</h1>
+  <p class="h1-sub">SISTEMA DE GESTION DE SUSCRIPTORES</p>
+  <div class="tab-bar">
+    <button class="tab-btn${activeTab === 'subscribers' ? ' active' : ''}" data-tab="subscribers">SUSCRIPTORES</button>
+    <button class="tab-btn${activeTab === 'templates' ? ' active' : ''}" data-tab="templates">TEMPLATES</button>
+    <button class="tab-btn${activeTab === 'sequence' ? ' active' : ''}" data-tab="sequence">SECUENCIA</button>
+  </div>
   ${content}
 </div>
 <script>
 (function() {
+  // Tabs
+  var currentTab = '${activeTab}';
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tab = this.getAttribute('data-tab');
+      var url = new URL(location.href);
+      url.searchParams.set('tab', tab);
+      url.searchParams.delete('saved');
+      location.href = url.toString();
+    });
+  });
+
+  // Quill editors
   var quills = {};
   document.querySelectorAll('.ql-editor-container').forEach(function(div) {
     var editorId = div.id;
@@ -58,6 +90,21 @@ function htmlPage(content) {
     quills[editorId] = { quill: q, hiddenId: hiddenId };
   });
 
+  // Template selector: cargar datos del template seleccionado
+  var templateSelect = document.getElementById('template-selector');
+  var templatesDataEl = document.getElementById('templates-data');
+  if (templateSelect && templatesDataEl) {
+    var templatesData = JSON.parse(templatesDataEl.textContent);
+    templateSelect.addEventListener('change', function() {
+      var tpl = templatesData[this.value];
+      if (tpl && quills['editor-template']) {
+        document.querySelector('[name="subject"]').value = tpl.subject || '';
+        quills['editor-template'].quill.root.innerHTML = tpl.html || '';
+      }
+    });
+  }
+
+  // Form submit: copiar Quill HTML a hidden inputs
   document.querySelectorAll('.editor-form').forEach(function(form) {
     form.addEventListener('submit', function() {
       Object.keys(quills).forEach(function(id) {
@@ -87,7 +134,6 @@ function renderTable(subscribers) {
       ? new Date(s.lead_magnet_sent_at).toISOString().replace('T', ' ').substring(0, 19)
       : '—';
     const createdAt = new Date(s.created_at).toISOString().replace('T', ' ').substring(0, 19);
-
     const source = s.source || '—';
     const tags = (s.tags || []).join(', ') || '—';
 
@@ -132,27 +178,38 @@ function parseBody(req) {
   });
 }
 
-function editorForm(template) {
-  const subject = template?.subject || '';
-  const html = template?.html || '';
-  return `<hr style="border:1px solid #4e4636;margin:32px 0">
-<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">Editor de Email de Bienvenida</h2>
+function templatesTab(templates) {
+  const tplMap = {};
+  for (const t of templates) { tplMap[t.name] = t; }
+  const current = tplMap['lead_magnet'] || {};
+  const names = [
+    { value: 'lead_magnet', label: 'lead_magnet — Email de bienvenida (lead magnet)' },
+    { value: 'waitlist', label: 'waitlist — Confirmación lista de espera' },
+  ];
+
+  let options = '';
+  for (const n of names) {
+    const sel = current.name === n.value || (!current.name && n.value === 'lead_magnet') ? ' selected' : '';
+    options += `<option value="${n.value}"${sel}>${n.label}</option>`;
+  }
+
+  return `<div class="tab-panel active" id="tab-templates">
+<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">EDITOR DE TEMPLATES DE EMAIL</h2>
 <form method="POST" class="editor-form" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
-  <input type="hidden" name="name" value="lead_magnet">
-  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Asunto</label>
-  <input type="text" name="subject" value="${escapeHtml(subject)}" required
-         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
-  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholders: {'{{'}lead_magnet_url{'}}'}, {'{{'}unsubscribe_link{'}}'})</label>
-  <input type="hidden" name="html" id="html-lead-magnet">
-  <div id="editor-lead-magnet" class="ql-editor-container" data-hidden="html-lead-magnet">${html}</div>
-  <button type="submit"
-          style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
-    GUARDAR TEMPLATE
-  </button>
-</form>`;
+  <label>Template</label>
+  <select id="template-selector" name="name">${options}</select>
+  <label>Asunto</label>
+  <input type="text" name="subject" value="${escapeHtml(current.subject || '')}" required>
+  <label>HTML (placeholders: {'{{'}unsubscribe_link{'}}'}{'{{'}lead_magnet_url{'}}'})</label>
+  <input type="hidden" name="html" id="html-template">
+  <div id="editor-template" class="ql-editor-container" data-hidden="html-template">${current.html || ''}</div>
+  <button type="submit" class="btn-save">GUARDAR TEMPLATE</button>
+</form>
+<script type="application/json" id="templates-data">${JSON.stringify(tplMap)}</script>
+</div>`;
 }
 
-function onboardingEditor(steps) {
+function sequenceTab(steps) {
   let rows = '';
   for (const s of steps) {
     rows += `<tr>
@@ -162,34 +219,30 @@ function onboardingEditor(steps) {
     </tr>`;
   }
 
-  return `<hr style="border:1px solid #4e4636;margin:32px 0">
-<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">Secuencia de Onboarding</h2>
+  return `<div class="tab-panel active" id="tab-sequence">
+<h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">SECUENCIA DE ONBOARDING</h2>
 ${steps.length > 0 ? `<table style="margin-bottom:24px">
   <thead><tr><th>Delay</th><th>Asunto</th><th>Estado</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>` : '<p style="color:#9a907d;margin-bottom:24px">Sin emails de onboarding. Agregá el primero.</p>'}
 <form method="POST" class="editor-form" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
   <input type="hidden" name="action" value="save_onboarding">
-  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Delay (horas tras suscripción)</label>
-  <input type="number" name="delay_hours" value="24" min="1" required
-         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px;width:100px">
-  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Asunto</label>
-  <input type="text" name="subject" required
-         style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
-  <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholder: {'{{'}unsubscribe_link{'}}'})</label>
+  <label>Delay (horas tras suscripción)</label>
+  <input type="number" name="delay_hours" value="24" min="1" required style="width:100px">
+  <label>Asunto</label>
+  <input type="text" name="subject" required>
+  <label>HTML (placeholder: {'{{'}unsubscribe_link{'}}'})</label>
   <input type="hidden" name="html" id="html-onboarding">
   <div id="editor-onboarding" class="ql-editor-container" data-hidden="html-onboarding"></div>
-  <button type="submit"
-          style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
-    AGREGAR EMAIL
-  </button>
+  <button type="submit" class="btn-save">AGREGAR EMAIL</button>
 </form>
-<p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a907d;margin-top:16px">CRON externo: configurar en cron-job.org — POST a /api/cron/send-onboarding con header x-api-key cada hora.</p>`;
+<p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a907d;margin-top:16px">CRON externo: configurar en cron-job.org — POST a /api/cron/send-onboarding con header x-api-key cada hora.</p>
+</div>`;
 }
 
 function savedBanner(param) {
   if (param === '1') {
-    return '<div style="background:#1a3a1a;border:1px solid #2d6a2d;color:#98ccf6;padding:12px 16px;margin-bottom:16px;font-family:Inter,sans-serif;font-size:14px">Template guardado correctamente.</div>';
+    return '<div style="background:#1a3a1a;border:1px solid #2d6a2d;color:#98ccf6;padding:12px 16px;margin-bottom:16px;font-family:Inter,sans-serif;font-size:14px">Guardado correctamente.</div>';
   }
   if (param === 'error') {
     return '<div style="background:#3a1a1a;border:1px solid #6a2d2d;color:#ffb4ab;padding:12px 16px;margin-bottom:16px;font-family:Inter,sans-serif;font-size:14px">Error al guardar. Intenta de nuevo.</div>';
@@ -212,7 +265,7 @@ export default async function handler(req, res) {
     }
     res.setHeader('WWW-Authenticate', 'Basic realm="IRREDUCTIBLE Admin"');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(401).send(htmlPage('<p>Acceso restringido.</p>'));
+    return res.status(401).send(htmlPage('subscribers', '<p>Acceso restringido.</p>'));
   }
 
   try {
@@ -230,7 +283,6 @@ export default async function handler(req, res) {
         const subject = (body.subject || '').trim();
         const html = (body.html || '').trim();
         const delayHours = parseInt(body.delay_hours, 10);
-        const active = body.active !== 'false';
 
         if (!subject || !html || isNaN(delayHours) || delayHours < 1) {
           return res.status(400).json({ error: 'Faltan campos: subject, html, delay_hours' });
@@ -238,14 +290,14 @@ export default async function handler(req, res) {
 
         await sql`
           INSERT INTO onboarding_emails (subject, html, delay_hours, active, updated_at)
-          VALUES (${subject}, ${html}, ${delayHours}, ${active}, NOW())
+          VALUES (${subject}, ${html}, ${delayHours}, true, NOW())
         `;
 
-        res.setHeader('Location', '/api/admin?saved=1');
+        res.setHeader('Location', '/api/admin?saved=1&tab=sequence');
         return res.status(302).end();
       }
 
-      // save_template (default)
+      // save_template
       const name = (body.name || '').trim();
       const subject = (body.subject || '').trim();
       const html = (body.html || '').trim();
@@ -253,12 +305,6 @@ export default async function handler(req, res) {
       if (!name || !subject || !html) {
         return res.status(400).json({ error: 'Faltan campos: name, subject, html' });
       }
-
-      await sql`
-        INSERT INTO email_templates (name, subject, html, updated_at)
-        VALUES (${name}, ${subject}, ${html}, NOW())
-        ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html = EXCLUDED.html, updated_at = NOW()
-      `;
 
       console.log('save_template: name=' + name + ' subject=' + subject + ' html_len=' + html.length);
       await sql`
@@ -268,7 +314,7 @@ export default async function handler(req, res) {
       `;
       console.log('save_template: guardado OK');
 
-      res.setHeader('Location', '/api/admin?saved=1');
+      res.setHeader('Location', '/api/admin?saved=1&tab=templates');
       return res.status(302).end();
     }
 
@@ -276,20 +322,34 @@ export default async function handler(req, res) {
       return res.status(405).send('Method not allowed');
     }
 
-    const [subscribers, templateRows, onboardingSteps] = await Promise.all([
+    const url = new URL(req.url || '/', 'https://irreductible.site');
+    const saved = url.searchParams.get('saved') || '';
+    const activeTab = url.searchParams.get('tab') || 'subscribers';
+
+    const [subscribers, templates, onboardingSteps] = await Promise.all([
       sql`SELECT email, source, tags, status, created_at, lead_magnet_sent_at FROM subscribers ORDER BY created_at DESC`,
-      sql`SELECT subject, html FROM email_templates WHERE name = 'lead_magnet'`,
+      sql`SELECT name, subject, html FROM email_templates ORDER BY name`,
       sql`SELECT id, subject, delay_hours, active FROM onboarding_emails ORDER BY delay_hours ASC`,
     ]);
 
-    const url = new URL(req.url || '/', 'https://irreductible.site');
-    const saved = url.searchParams.get('saved') || '';
+    let panels = '';
 
-    const template = templateRows[0] || null;
-    const content = savedBanner(saved) + renderTable(subscribers) + editorForm(template) + onboardingEditor(onboardingSteps);
+    // Subscribers tab
+    const subsActive = activeTab === 'subscribers' ? ' active' : '';
+    panels += `<div class="tab-panel${subsActive}" id="tab-subscribers">${renderTable(subscribers)}</div>`;
+
+    // Templates tab
+    const tmplActive = activeTab === 'templates' ? ' active' : '';
+    panels += `<div class="tab-panel${tmplActive}" id="tab-templates-wrapper">${templatesTab(templates)}</div>`;
+
+    // Sequence tab
+    const seqActive = activeTab === 'sequence' ? ' active' : '';
+    panels += `<div class="tab-panel${seqActive}" id="tab-sequence-wrapper">${sequenceTab(onboardingSteps)}</div>`;
+
+    const content = savedBanner(saved) + panels;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(200).send(htmlPage(content));
+    return res.status(200).send(htmlPage(activeTab, content));
   } catch (err) {
     console.error('admin error:', err.message);
     if (req.method === 'POST') {
@@ -297,6 +357,6 @@ export default async function handler(req, res) {
       return res.status(302).end();
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(500).send(htmlPage('<p>Error al cargar los datos.</p>'));
+    return res.status(500).send(htmlPage('subscribers', '<p>Error al cargar los datos.</p>'));
   }
 }
