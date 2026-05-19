@@ -73,7 +73,7 @@ function check(name, condition) {
     body: { name: 'lead_magnet', subject: 'Nuevo asunto', html: '<p>Nuevo HTML</p>' },
   }), res2);
   check('POST template con auth → 302', res2._status === 302);
-  check('Location: /api/admin', res2._headers['Location'] === '/api/admin');
+  check('Location: /api/admin?saved=1', res2._headers['Location'] === '/api/admin?saved=1');
 
   // POST sin campos requeridos → 400
   const res3 = mockRes();

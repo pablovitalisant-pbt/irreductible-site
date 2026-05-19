@@ -112,8 +112,19 @@ function parseBody(req) {
     let data = '';
     req.on('data', (chunk) => { data += chunk; });
     req.on('end', () => {
-      try { resolve(JSON.parse(data || '{}')); }
-      catch { reject(new Error('JSON inválido')); }
+      try {
+        const trimmed = data.trim();
+        if (trimmed.startsWith('{')) {
+          resolve(JSON.parse(data));
+        } else if (trimmed) {
+          const params = new URLSearchParams(trimmed);
+          const obj = {};
+          params.forEach((value, key) => { obj[key] = value; });
+          resolve(obj);
+        } else {
+          resolve({});
+        }
+      } catch { reject(new Error('Body inválido')); }
     });
     req.on('error', reject);
   });
@@ -174,6 +185,16 @@ ${steps.length > 0 ? `<table style="margin-bottom:24px">
 <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a907d;margin-top:16px">CRON externo: configurar en cron-job.org — POST a /api/cron/send-onboarding con header x-api-key cada hora.</p>`;
 }
 
+function savedBanner(param) {
+  if (param === '1') {
+    return '<div style="background:#1a3a1a;border:1px solid #2d6a2d;color:#98ccf6;padding:12px 16px;margin-bottom:16px;font-family:Inter,sans-serif;font-size:14px">Template guardado correctamente.</div>';
+  }
+  if (param === 'error') {
+    return '<div style="background:#3a1a1a;border:1px solid #6a2d2d;color:#ffb4ab;padding:12px 16px;margin-bottom:16px;font-family:Inter,sans-serif;font-size:14px">Error al guardar. Intenta de nuevo.</div>';
+  }
+  return '';
+}
+
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -218,7 +239,7 @@ export default async function handler(req, res) {
           VALUES (${subject}, ${html}, ${delayHours}, ${active}, NOW())
         `;
 
-        res.setHeader('Location', '/api/admin');
+        res.setHeader('Location', '/api/admin?saved=1');
         return res.status(302).end();
       }
 
@@ -237,7 +258,15 @@ export default async function handler(req, res) {
         ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html = EXCLUDED.html, updated_at = NOW()
       `;
 
-      res.setHeader('Location', '/api/admin');
+      console.log('save_template: name=' + name + ' subject=' + subject + ' html_len=' + html.length);
+      await sql`
+        INSERT INTO email_templates (name, subject, html, updated_at)
+        VALUES (${name}, ${subject}, ${html}, NOW())
+        ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html = EXCLUDED.html, updated_at = NOW()
+      `;
+      console.log('save_template: guardado OK');
+
+      res.setHeader('Location', '/api/admin?saved=1');
       return res.status(302).end();
     }
 
@@ -251,15 +280,19 @@ export default async function handler(req, res) {
       sql`SELECT id, subject, delay_hours, active FROM onboarding_emails ORDER BY delay_hours ASC`,
     ]);
 
+    const url = new URL(req.url || '/', 'https://irreductible.site');
+    const saved = url.searchParams.get('saved') || '';
+
     const template = templateRows[0] || null;
-    const content = renderTable(subscribers) + editorForm(template) + onboardingEditor(onboardingSteps);
+    const content = savedBanner(saved) + renderTable(subscribers) + editorForm(template) + onboardingEditor(onboardingSteps);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(htmlPage(content));
   } catch (err) {
     console.error('admin error:', err.message);
     if (req.method === 'POST') {
-      return res.status(500).json({ error: 'Error interno' });
+      res.setHeader('Location', '/api/admin?saved=error');
+      return res.status(302).end();
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(500).send(htmlPage('<p>Error al cargar los datos.</p>'));
