@@ -16,7 +16,7 @@ function parseBody(req) {
   });
 }
 
-function unsubscribeFooter(unsubscribeToken) {
+export function unsubscribeFooter(unsubscribeToken) {
   const baseUrl = process.env.SITE_URL || 'https://irreductible.site';
   const link = `${baseUrl}/api/unsubscribe?token=${unsubscribeToken}`;
   return {
