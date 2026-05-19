@@ -171,9 +171,9 @@
 <p class="font-body-lg text-body-lg mb-4">Porque yo también lo creía.</p>
 <p class="font-body-lg text-body-lg mb-8">Y precisamente por eso intenté destruir los 158 archivos antes de tomar en serio cualquiera de ellos.</p>
 </div>
-<a href="https://serviciosdigitalespbt.systeme.io/f2eb8a92"><button class="bg-primary-container text-on-primary px-8 py-4 font-headline-sm text-headline-sm flicker-on-hover transition-colors duration-150">
+<button data-action="open-subscribe-modal" class="bg-primary-container text-on-primary px-8 py-4 font-headline-sm text-headline-sm flicker-on-hover transition-colors duration-150 cursor-pointer">
                     [ RECIBIR EL INFORME GRATUITO ]
-                </button></a>
+                </button>
 <p class="font-metadata text-metadata text-outline text-center uppercase tracking-tighter">
                     Transmisión segura // Acceso nivel 4 requerido
                 </p>
@@ -395,10 +395,10 @@
 <h3 class="font-headline-md text-primary mb-6 uppercase tracking-widest">Archivos PURSUE: Siete casos que resistieron el descarte</h3>
 <p class="font-body-md text-on-surface-variant uppercase tracking-widest font-metadata">Un análisis racional y metodológico de los archivos UAP desclasificados el 8 de mayo de 2026.</p>
 </div>
-<a href="https://serviciosdigitalespbt.systeme.io/f2eb8a92"
-   style="display:block; width:100%; text-align:center; background:#ecc155; color:#000; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.1em; padding:20px; text-decoration:none; border-radius:0;">
+<button data-action="open-subscribe-modal"
+   style="display:block; width:100%; text-align:center; background:#ecc155; color:#000; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.1em; padding:20px; border:none; border-radius:0; cursor:pointer;">
   [ RECIBIR EL INFORME GRATUITO ]
-</a>
+</button>
 </div>
 </section>
 </main>
@@ -408,4 +408,91 @@
 <p style="font-family:JetBrains Mono; font-size:12px; color:#9a907d; letter-spacing:0.1em;">WWW.IRREDUCTIBLE.SITE // IRREDUCTIBLE &copy; 2026 PABLO BRAVO</p>
 </div>
 </footer>
+<!-- SUBSCRIBE MODAL -->
+<div id="subscribe-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.85);">
+  <div class="relative w-[90vw] max-w-md bg-[#131313] border border-outline-variant p-8">
+    <button id="modal-close" class="absolute top-3 right-3 text-outline hover:text-on-surface font-metadata text-xl leading-none cursor-pointer">&times;</button>
+    <h2 class="font-headline-sm text-headline-sm text-primary text-center mb-6 uppercase">RECIBE EL INFORME</h2>
+    <form id="subscribe-form" class="flex flex-col items-center gap-4">
+      <input type="email" id="subscribe-email" required placeholder="TU EMAIL"
+             class="w-full bg-transparent border border-outline-variant px-4 py-3
+                    text-on-surface font-body-md text-center
+                    placeholder:text-outline focus:border-primary focus:outline-none">
+      <button type="submit"
+              class="w-full bg-primary-container text-on-primary px-8 py-4
+                     font-headline-sm text-headline-sm
+                     transition-colors duration-150 disabled:opacity-50">
+        [ RECIBIR EL INFORME GRATUITO ]
+      </button>
+      <p id="subscribe-msg" class="font-metadata text-metadata hidden text-center"></p>
+    </form>
+  </div>
+</div>
+<script>
+(function() {
+  var modal = document.getElementById('subscribe-modal');
+  var form = document.getElementById('subscribe-form');
+  var emailInput = document.getElementById('subscribe-email');
+  var msgEl = document.getElementById('subscribe-msg');
+  var submitBtn = form.querySelector('button[type="submit"]');
+
+  function showModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  function hideModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); form.reset(); msgEl.classList.add('hidden'); }
+
+  document.querySelectorAll("[data-action='open-subscribe-modal']").forEach(function(btn) {
+    btn.addEventListener('click', showModal);
+  });
+
+  document.getElementById('modal-close').addEventListener('click', hideModal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) hideModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideModal(); });
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = emailInput.value.trim();
+    if (!email) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '[ ENVIANDO... ]';
+    msgEl.classList.add('hidden');
+
+    try {
+      var res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      var data = await res.json();
+
+      msgEl.classList.remove('hidden');
+
+      if (res.ok && data.ok) {
+        msgEl.className = 'font-metadata text-metadata text-primary text-center';
+        msgEl.textContent = 'Revisa tu bandeja de entrada.';
+        submitBtn.textContent = '[ ENVIADO ]';
+        setTimeout(hideModal, 3000);
+      } else if (res.status === 409) {
+        msgEl.className = 'font-metadata text-metadata text-center';
+        msgEl.style.color = '#ecc155';
+        msgEl.textContent = 'Este email ya esta registrado.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '[ RECIBIR EL INFORME GRATUITO ]';
+      } else {
+        msgEl.className = 'font-metadata text-metadata text-center';
+        msgEl.style.color = '#ffb4ab';
+        msgEl.textContent = data.error || 'Error. Intenta de nuevo.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '[ RECIBIR EL INFORME GRATUITO ]';
+      }
+    } catch (err) {
+      msgEl.classList.remove('hidden');
+      msgEl.className = 'font-metadata text-metadata text-center';
+      msgEl.style.color = '#ffb4ab';
+      msgEl.textContent = 'Error de conexion. Intenta de nuevo.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = '[ RECIBIR EL INFORME GRATUITO ]';
+    }
+  });
+})();
+</script>
 </body></html>
