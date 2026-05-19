@@ -1,5 +1,5 @@
 {
-  "email_system": false,
+  "email_system": true,
   "slices": {
     "slice_1_schema": true,
     "slice_2_subscribe": true,
