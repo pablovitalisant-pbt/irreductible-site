@@ -2,7 +2,7 @@
   "email_system": false,
   "slices": {
     "slice_1_schema": true,
-    "slice_2_subscribe": false,
+    "slice_2_subscribe": true,
     "slice_3_form": false,
     "slice_4_unsubscribe": false,
     "slice_5_send_newsletter": false,
