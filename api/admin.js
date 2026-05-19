@@ -183,7 +183,8 @@ export default async function handler(req, res) {
           VALUES (${subject}, ${html}, ${delayHours}, ${active}, NOW())
         `;
 
-        return res.status(200).json({ ok: true });
+        res.setHeader('Location', '/api/admin');
+        return res.status(302).end();
       }
 
       // save_template (default)
@@ -201,7 +202,8 @@ export default async function handler(req, res) {
         ON CONFLICT (name) DO UPDATE SET subject = EXCLUDED.subject, html = EXCLUDED.html, updated_at = NOW()
       `;
 
-      return res.status(200).json({ ok: true });
+      res.setHeader('Location', '/api/admin');
+      return res.status(302).end();
     }
 
     if (req.method !== 'GET') {

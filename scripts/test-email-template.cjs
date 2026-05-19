@@ -56,6 +56,7 @@ function check(name, condition) {
       json(data) { this._json = data; return this; },
       setHeader(key, val) { this._headers[key] = val; return this; },
       send(body) { this._body = body; return this; },
+      end() { return this; },
     };
   }
 
@@ -64,14 +65,15 @@ function check(name, condition) {
   await handler(mockReq({ method: 'POST', body: { name: 'lead_magnet', subject: 'Test', html: '<p>x</p>' } }), res1);
   check('POST template sin auth → 401', res1._status === 401);
 
-  // POST con auth → 200
+  // POST con auth → 302 redirect a /api/admin
   const res2 = mockRes();
   await handler(mockReq({
     method: 'POST',
     headers: { authorization: authHeader },
     body: { name: 'lead_magnet', subject: 'Nuevo asunto', html: '<p>Nuevo HTML</p>' },
   }), res2);
-  check('POST template con auth → 200', res2._status === 200 && res2._json?.ok);
+  check('POST template con auth → 302', res2._status === 302);
+  check('Location: /api/admin', res2._headers['Location'] === '/api/admin');
 
   // POST sin campos requeridos → 400
   const res3 = mockRes();
