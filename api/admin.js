@@ -17,6 +17,8 @@ function htmlPage(content) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel Admin | IRREDUCTIBLE</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <style>
   body { background:#131313; color:#e5e2e1; font-family:Inter,sans-serif; margin:0; padding:24px; }
   h1 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#ecc155; margin:0 0 24px; letter-spacing:0.05em; }
@@ -29,6 +31,13 @@ function htmlPage(content) {
   .container { max-width:960px; margin:0 auto; }
   .count { font-family:'JetBrains Mono',monospace; font-size:12px; color:#9a907d; margin-bottom:16px; }
   a { color:#98ccf6; }
+  .ql-toolbar.ql-snow { border-color:#4e4636; background:#1c1b1b; }
+  .ql-container.ql-snow { border-color:#4e4636; background:#131313; color:#e5e2e1; font-family:Inter,sans-serif; font-size:14px; min-height:200px; }
+  .ql-editor { min-height:200px; }
+  .ql-snow .ql-stroke { stroke:#9a907d; }
+  .ql-snow .ql-fill { fill:#9a907d; }
+  .ql-snow .ql-picker { color:#9a907d; }
+  .ql-snow .ql-picker-options { background:#1c1b1b; border-color:#4e4636; }
 </style>
 </head>
 <body>
@@ -36,6 +45,32 @@ function htmlPage(content) {
   <h1>Panel Admin — Suscriptores</h1>
   ${content}
 </div>
+<script>
+(function() {
+  var quills = {};
+  document.querySelectorAll('.ql-editor-container').forEach(function(div) {
+    var editorId = div.id;
+    var hiddenId = div.getAttribute('data-hidden');
+    var q = new Quill('#' + editorId, {
+      theme: 'snow',
+      modules: { toolbar: [['bold','italic','link'], [{ list: 'bullet' }, { list: 'ordered' }], ['clean']] }
+    });
+    quills[editorId] = { quill: q, hiddenId: hiddenId };
+  });
+
+  document.querySelectorAll('.editor-form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+      Object.keys(quills).forEach(function(id) {
+        var entry = quills[id];
+        var hidden = document.getElementById(entry.hiddenId);
+        if (hidden && form.contains(document.getElementById(id))) {
+          hidden.value = entry.quill.root.innerHTML;
+        }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>`;
 }
@@ -89,14 +124,14 @@ function editorForm(template) {
   const html = template?.html || '';
   return `<hr style="border:1px solid #4e4636;margin:32px 0">
 <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#ecc155;margin:0 0 16px;letter-spacing:0.05em">Editor de Email de Bienvenida</h2>
-<form method="POST" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
+<form method="POST" class="editor-form" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
   <input type="hidden" name="name" value="lead_magnet">
   <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Asunto</label>
   <input type="text" name="subject" value="${escapeHtml(subject)}" required
          style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
   <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholders: {'{{'}lead_magnet_url{'}}'}, {'{{'}unsubscribe_link{'}}'})</label>
-  <textarea name="html" rows="16" required
-            style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical">${escapeHtml(html)}</textarea>
+  <input type="hidden" name="html" id="html-lead-magnet">
+  <div id="editor-lead-magnet" class="ql-editor-container" data-hidden="html-lead-magnet">${html}</div>
   <button type="submit"
           style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
     GUARDAR TEMPLATE
@@ -120,7 +155,7 @@ ${steps.length > 0 ? `<table style="margin-bottom:24px">
   <thead><tr><th>Delay</th><th>Asunto</th><th>Estado</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>` : '<p style="color:#9a907d;margin-bottom:24px">Sin emails de onboarding. Agregá el primero.</p>'}
-<form method="POST" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
+<form method="POST" class="editor-form" style="display:flex;flex-direction:column;gap:12px;max-width:600px">
   <input type="hidden" name="action" value="save_onboarding">
   <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">Delay (horas tras suscripción)</label>
   <input type="number" name="delay_hours" value="24" min="1" required
@@ -129,8 +164,8 @@ ${steps.length > 0 ? `<table style="margin-bottom:24px">
   <input type="text" name="subject" required
          style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:Inter,sans-serif;font-size:14px">
   <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d1c5b0">HTML (placeholder: {'{{'}unsubscribe_link{'}}'})</label>
-  <textarea name="html" rows="10" required
-            style="background:transparent;border:1px solid #4e4636;color:#e5e2e1;padding:10px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical"></textarea>
+  <input type="hidden" name="html" id="html-onboarding">
+  <div id="editor-onboarding" class="ql-editor-container" data-hidden="html-onboarding"></div>
   <button type="submit"
           style="background:#ecc155;color:#131313;border:none;padding:12px 24px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;align-self:flex-start">
     AGREGAR EMAIL

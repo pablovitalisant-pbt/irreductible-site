@@ -87,7 +87,7 @@ function check(name, condition) {
   // GET contiene formulario editor
   const res4 = mockRes();
   await handler(mockReq({ method: 'GET', headers: { authorization: authHeader } }), res4);
-  check('GET admin contiene formulario editor', res4._body.includes('subject') && res4._body.includes('textarea'));
+  check('GET admin contiene Quill editor', res4._body.includes('subject') && res4._body.includes('ql-editor-container'));
 
   // === subscribe.js usa template de DB ===
   const subMod = await import('../api/subscribe.js');
