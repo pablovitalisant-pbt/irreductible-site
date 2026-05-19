@@ -6,6 +6,8 @@
     "slice_3_form": true,
     "slice_4_unsubscribe": true,
     "slice_5_send_newsletter": true,
-    "slice_6_unsubscribe_link": true
+    "slice_6_unsubscribe_link": true,
+    "fase2_rate_limiting": true,
+    "fase2_admin_list": true
   }
 }

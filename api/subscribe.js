@@ -1,7 +1,15 @@
 import { neon } from '@neondatabase/serverless';
 import { Resend } from 'resend';
+import { RateLimiter } from './_lib/rate-limiter.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const rateLimiter = new RateLimiter({ maxRequests: 5, windowMs: 15 * 60 * 1000 });
+
+function getClientIP(req) {
+  const forwarded = req.headers?.['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.headers?.['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+}
 
 function parseBody(req) {
   return new Promise((resolve, reject) => {
@@ -23,6 +31,11 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  const clientIP = getClientIP(req);
+  if (!rateLimiter.check(clientIP)) {
+    return res.status(429).json({ error: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' });
   }
 
   let body;
