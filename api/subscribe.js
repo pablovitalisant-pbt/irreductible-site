@@ -75,8 +75,8 @@ export default async function handler(req, res) {
     const sql = neon(process.env.DATABASE_URL);
 
     const result = await sql`
-      INSERT INTO subscribers (email, source)
-      VALUES (${email}, ${source})
+      INSERT INTO subscribers (email, source, tags)
+      VALUES (${email}, ${source}, ARRAY['lead_magnet']::text[])
       ON CONFLICT (email) DO NOTHING
       RETURNING id, unsubscribe_token
     `;

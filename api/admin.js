@@ -89,10 +89,12 @@ function renderTable(subscribers) {
     const createdAt = new Date(s.created_at).toISOString().replace('T', ' ').substring(0, 19);
 
     const source = s.source || '—';
+    const tags = (s.tags || []).join(', ') || '—';
 
     rows += `<tr>
       <td>${s.email}</td>
       <td>${source}</td>
+      <td>${escapeHtml(tags)}</td>
       <td class="${statusClass}">${s.status}</td>
       <td>${createdAt}</td>
       <td>${leadSent}</td>
@@ -101,7 +103,7 @@ function renderTable(subscribers) {
 
   return `<p class="count">${subscribers.length} suscriptor(es)</p>
 <table>
-  <thead><tr><th>Email</th><th>Source</th><th>Status</th><th>Creado</th><th>Lead Magnet</th></tr></thead>
+  <thead><tr><th>Email</th><th>Source</th><th>Tags</th><th>Status</th><th>Creado</th><th>Lead Magnet</th></tr></thead>
   <tbody>${rows}</tbody>
 </table>`;
 }
@@ -275,7 +277,7 @@ export default async function handler(req, res) {
     }
 
     const [subscribers, templateRows, onboardingSteps] = await Promise.all([
-      sql`SELECT email, source, status, created_at, lead_magnet_sent_at FROM subscribers ORDER BY created_at DESC`,
+      sql`SELECT email, source, tags, status, created_at, lead_magnet_sent_at FROM subscribers ORDER BY created_at DESC`,
       sql`SELECT subject, html FROM email_templates WHERE name = 'lead_magnet'`,
       sql`SELECT id, subject, delay_hours, active FROM onboarding_emails ORDER BY delay_hours ASC`,
     ]);

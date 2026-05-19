@@ -13,6 +13,7 @@
     "fase2_webhooks_metrics": true,
     "fase2_source_tag": true,
     "fase2_onboarding_cron": true,
-    "fase2_email_validation": true
+    "fase2_email_validation": true,
+    "fase2_tags_waitlist_backend": true
   }
 }
