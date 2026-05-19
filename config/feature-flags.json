@@ -5,7 +5,7 @@
     "slice_2_subscribe": true,
     "slice_3_form": true,
     "slice_4_unsubscribe": true,
-    "slice_5_send_newsletter": false,
+    "slice_5_send_newsletter": true,
     "slice_6_unsubscribe_link": false
   }
 }
