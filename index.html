@@ -414,6 +414,7 @@
     <button id="modal-close" class="absolute top-3 right-3 text-outline hover:text-on-surface font-metadata text-xl leading-none cursor-pointer">&times;</button>
     <h2 class="font-headline-sm text-headline-sm text-primary text-center mb-6 uppercase">RECIBE EL INFORME</h2>
     <form id="subscribe-form" class="flex flex-col items-center gap-4">
+      <input type="hidden" name="source" value="landing_principal">
       <input type="email" id="subscribe-email" required placeholder="TU EMAIL"
              class="w-full bg-transparent border border-outline-variant px-4 py-3
                     text-on-surface font-body-md text-center
@@ -452,6 +453,9 @@
     var email = emailInput.value.trim();
     if (!email) return;
 
+    var sourceInput = form.querySelector('[name="source"]');
+    var source = sourceInput ? sourceInput.value : '';
+
     submitBtn.disabled = true;
     submitBtn.textContent = '[ ENVIANDO... ]';
     msgEl.classList.add('hidden');
@@ -460,7 +464,7 @@
       var res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email, source: source })
       });
       var data = await res.json();
 

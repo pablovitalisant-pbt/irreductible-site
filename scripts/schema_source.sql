@@ -1,0 +1,1 @@
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS source VARCHAR(50);

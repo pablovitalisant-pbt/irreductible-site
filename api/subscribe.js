@@ -69,12 +69,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email inválido' });
   }
 
+  const source = (body.source || '').trim().substring(0, 50) || null;
+
   try {
     const sql = neon(process.env.DATABASE_URL);
 
     const result = await sql`
-      INSERT INTO subscribers (email)
-      VALUES (${email})
+      INSERT INTO subscribers (email, source)
+      VALUES (${email}, ${source})
       ON CONFLICT (email) DO NOTHING
       RETURNING id, unsubscribe_token
     `;
