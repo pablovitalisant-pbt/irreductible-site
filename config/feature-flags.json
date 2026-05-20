@@ -16,6 +16,7 @@
     "fase2_email_validation": true,
     "fase2_tags_waitlist_backend": true,
     "fase2_tags_waitlist_frontend": true,
-    "checkout_page": false
+    "checkout_page": false,
+    "checkout_calculate_api": false
   }
 }
