@@ -1,150 +1,112 @@
-# CLAUDE.md — irreductible-site
+# CLAUDE.md — irreductible-site (Print Checkout Feature)
 
-## Propósito del proyecto
-
-Sitio web estático para IRREDUCTIBLE. HTML puro desplegado en Vercel. Sin frameworks. Sin build steps. Lo que se sube es lo que se ve.
-
----
+## Contexto del proyecto
+Feature de checkout para venta del libro físico "IRREDUCTIBLE. La Anomalía Persistente".
+Se agrega al repo Next.js existente. NO es un proyecto desde cero.
 
 ## Stack
+- Next.js (App Router) + TypeScript
+- Neon PostgreSQL (variable: DATABASE_URL — ya existe)
+- Resend para emails (variable: RESEND_API_KEY — ya existe)
+- Cloudinary para imágenes (ya existe, no tocar)
+- Lulu Print API (variables: LULU_CLIENT_KEY, LULU_CLIENT_SECRET)
+- PayPal Orders API v2 (variables: PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET)
+- Vercel (deploy automático desde main)
 
-- HTML estático puro (sin React, sin Next.js, sin nada)
-- Python 3 para el script de generación de páginas de evidencia
-- Vercel para hosting
-- GitHub: `pablovitalisant-pbt/irreductible-site`
-
-## Comandos
-
-```powershell
-# Generar páginas de evidencia desde .md
-python scripts/generate_evidencia.py
-
-# Verificar que se generaron correctamente
-Get-ChildItem evidencia/ | Measure-Object
-
-# Push y deploy
-git add .
-git commit -m "mensaje"
-git push
+## Comandos de desarrollo
+```bash
+npm run dev       # servidor local
+npm run build     # build de producción
+npm run lint      # eslint
+npm run typecheck # tsc --noEmit
 ```
 
----
-
-## Rutas críticas
-
-### Archivos de entrada (NO modificar)
+## Variables de entorno requeridas para esta feature
 ```
-C:\Users\pablo\Documents\libro-uap\website\landing_leadmagnet\code.html
-C:\Users\pablo\Documents\libro-uap\website\landing_libro\code.html
-C:\Users\pablo\Documents\libro-uap\website\landing_libro\DESIGN.md
-C:\Users\pablo\Documents\libro-uap\LeadMagnet\uap-leadmagnet\output\extractions\*.md
-```
-
-### Estructura del repo
-```
-irreductible-site/
-  index.html          ← landing lead magnet (copia exacta, sin tocar)
-  libro.html          ← landing libro (copia exacta, sin tocar)
-  evidencia/          ← páginas generadas por script
-  assets/
-  scripts/
-    generate_evidencia.py
-  .gitignore
-  README.md
+LULU_CLIENT_KEY=
+LULU_CLIENT_SECRET=
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=
+DATABASE_URL=         # ya existe
+RESEND_API_KEY=       # ya existe
+ADMIN_EMAIL=pablo@... # email donde Pablo recibe notificaciones de venta
 ```
 
----
-
-## Regla de oro — NO tocar los HTMLs existentes
-
-`index.html` y `libro.html` son copias exactas de los HTMLs generados por Stitch. No se modifican. No se refactorizan. No se "mejoran". Si hay que agregar el script de Systeme.io, se pega en el HTML sin tocar nada más.
-
----
-
-## Sistema de diseño
-
-Ver `C:\Users\pablo\Documents\libro-uap\website\landing_libro\DESIGN.md`
-
-Paleta principal:
-- Fondo: `#131313`
-- Primario/acción: `#ecc155` (dorado ámbar)
-- Secundario/HUD: `#98ccf6` (azul acero)
-- Texto: `#e5e2e1`
-- Metadata: `#d1c5b0`
-- Bordes: `#4e4636`
-
-Tipografías: Bebas Neue (títulos) · Inter (cuerpo) · JetBrains Mono (metadata)
-
-Border radius: 0px en todo.
-
----
-
-## Script generate_evidencia.py — especificación
-
-### Input
-Todos los `.md` en:
-`C:\Users\pablo\Documents\libro-uap\LeadMagnet\uap-leadmagnet\output\extractions\`
-
-### Output
-Un `.html` por cada `.md` en `evidencia/`
-
-Naming: `FBI-Photo-B20.pdf.md` → `evidencia/fbi-photo-b20-pdf.html`
-Regla: lowercase, espacios y puntos a guiones, sin extensión `.md`
-
-### Estructura de cada página
-
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <!-- Google Fonts: Bebas Neue, Inter, JetBrains Mono -->
-  <!-- Meta SEO: title, description, og:* -->
-  <!-- Schema: Article -->
-  <!-- Tailwind CDN (mismo que los HTMLs existentes) -->
-</head>
-<body class="bg-[#131313] text-[#e5e2e1]">
-  <!-- NAV: logo + enlaces Index y Libro -->
-  <!-- HEADER del documento: chip agencia, ruta fuente, título -->
-  <!-- CONTENIDO: markdown renderizado como HTML -->
-  <!-- CTA: bloque con enlace al lead magnet -->
-  <!-- FOOTER -->
-</body>
-</html>
+## Constantes del libro (NO hardcodear en componentes — usar lib/constants.ts)
+```typescript
+BOOK_SKU         // SKU de 27 caracteres generado en Lulu Price Calculator
+BOOK_PAGE_COUNT  // número de páginas del interior PDF
+BOOK_TITLE       // "IRREDUCTIBLE. La Anomalía Persistente"
+BOOK_AUTHOR      // "Pablo Bravo"
 ```
 
-### SEO por página
-- `<title>`: `[nombre_archivo] | IRREDUCTIBLE`
-- `<meta name="description">`: primeros 160 chars del contenido del .md
-- `<meta property="og:title">`, `og:description`, `og:url`
-- Schema JSON-LD: `Article` con `author: "Pablo Bravo"`, `publisher: "IRREDUCTIBLE"`
+## Endpoints de Lulu API
+- Producción: https://api.lulu.com
+- Sandbox:    https://api.sandbox.lulu.com
+- Auth:       https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token
+- Auth sandbox: https://api.sandbox.lulu.com/auth/realms/glasstree/protocol/openid-connect/token
 
----
+## Autenticación Lulu
+OAuth2 client_credentials. El token expira — renovar automáticamente en el cliente.
+```
+POST /auth/realms/glasstree/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Body: grant_type=client_credentials&client_id=KEY&client_secret=SECRET
+```
+
+## Endpoints de PayPal API
+- Producción: https://api-m.paypal.com
+- Sandbox:    https://api-m.sandbox.paypal.com
+
+## Estructura de carpetas nueva
+```
+src/
+  app/
+    checkout/
+      page.tsx
+    api/
+      lulu/
+        calculate/route.ts
+        create-print-job/route.ts
+      paypal/
+        create-order/route.ts
+        capture-order/route.ts
+  components/
+    checkout/
+      CheckoutForm.tsx
+      ShippingForm.tsx
+      CostBreakdown.tsx
+      PayPalButton.tsx
+  lib/
+    lulu.ts
+    paypal.ts
+    constants.ts
+db/
+  migrations/
+    001_create_orders.sql
+```
 
 ## Naming conventions
+- Componentes: PascalCase
+- Funciones/variables: camelCase
+- Archivos no-componente: kebab-case
+- Variables de entorno: SCREAMING_SNAKE_CASE
+- Constantes del libro: exportadas desde lib/constants.ts
 
-- Páginas: kebab-case (`fbi-photo-b20-pdf.html`)
-- Script: snake_case (`generate_evidencia.py`)
-- Sin espacios en nombres de archivo de output
+## Reglas críticas
+1. NUNCA exponer LULU_CLIENT_SECRET ni PAYPAL_CLIENT_SECRET al cliente
+2. Toda llamada a Lulu API y PayPal API va server-side (API routes de Next.js)
+3. El print job en Lulu se crea SOLO después de confirmar que el pago PayPal fue capturado
+4. El estado de la orden en DB se actualiza antes de llamar a Lulu (para no perder la info si Lulu falla)
+5. Máximo 200 líneas por slice — proponer sub-slices si se excede
+6. No modificar archivos existentes fuera del scope sin autorización de Pablo
 
----
+## Modelo tabla orders
+Ver PRD.md sección "Modelo de datos"
 
-## Deploy en Vercel
-
-1. Conectar repo `pablovitalisant-pbt/irreductible-site` en Vercel
-2. Framework preset: **Other** (no detectar framework)
-3. Build command: vacío
-4. Output directory: `.` (raíz del repo)
-5. Cada push a `main` despliega automáticamente
-
-## DNS en Namecheap
-
-```
-Type: A     Host: @    Value: 76.76.21.21
-Type: CNAME Host: www  Value: cname.vercel-dns.com
-```
-
----
+## Feature flags
+Cada slice agrega su entry en config/feature-flags.json con flag en false.
+Pablo activa manualmente en producción.
 
 ## Referencia
-
-Ver PRD.md para backlog completo.
+Ver PRD.md para backlog completo, flujo y prerequisitos.
