@@ -21,6 +21,7 @@
     "checkout_paypal_create_api": false,
     "checkout_paypal_capture_api": false,
     "checkout_lulu_print_api": false,
-    "checkout_db_orders": false
+    "checkout_db_orders": false,
+    "checkout_emails": false
   }
 }

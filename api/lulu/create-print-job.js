@@ -1,8 +1,9 @@
 // api/lulu/create-print-job.js
-// POST /api/lulu/create-print-job — crea print job en Lulu + actualiza DB (status=print_submitted)
+// POST /api/lulu/create-print-job — crea print job en Lulu + actualiza DB + notifica admin
 
 import { createPrintJob } from '../../lib/lulu.js';
 import { getSql } from '../../lib/db.js';
+import { sendAdminNotification } from '../../lib/email.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,12 +33,29 @@ export default async function handler(req, res) {
     });
 
     // Actualizar DB: status = print_submitted + lulu_print_job_id
+    let order = null;
     try {
       const sql = getSql();
       const orderId = paypal_order_id || 'unknown';
       await sql`UPDATE orders SET status = 'print_submitted', lulu_print_job_id = ${result.lulu_print_job_id}, updated_at = NOW() WHERE paypal_order_id = ${orderId}`;
+      const rows = await sql`SELECT buyer_name, buyer_email, total_usd, quantity, shipping_address, shipping_option FROM orders WHERE paypal_order_id = ${orderId}`;
+      order = rows[0];
     } catch (dbErr) {
       console.error('[lulu/create-print-job] DB update failed:', dbErr.message);
+    }
+
+    // Notificación a Pablo (no bloqueante)
+    if (order) {
+      sendAdminNotification({
+        buyer_name: order.buyer_name,
+        buyer_email: order.buyer_email,
+        total_usd: order.total_usd,
+        quantity: order.quantity,
+        paypal_order_id: paypal_order_id || 'unknown',
+        lulu_print_job_id: result.lulu_print_job_id,
+        shipping_address: order.shipping_address,
+        shipping_option: order.shipping_option,
+      }).catch(() => {});
     }
 
     return res.status(200).json({ ok: true, ...result });
