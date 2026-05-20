@@ -1,8 +1,8 @@
 // api/paypal/capture-order.js
-// POST /api/paypal/capture-order — captura el pago PayPal después de aprobación del comprador
-// Se llama desde el frontend después de que PayPal redirige con éxito.
+// POST /api/paypal/capture-order — captura el pago PayPal + actualiza DB (status=paid)
 
 import { captureOrder } from '../../lib/paypal.js';
+import { getSql } from '../../lib/db.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -19,6 +19,15 @@ export default async function handler(req, res) {
 
   try {
     const result = await captureOrder(paypal_order_id.trim());
+
+    // Actualizar DB: status = paid
+    try {
+      const sql = getSql();
+      await sql`UPDATE orders SET status = 'paid', updated_at = NOW() WHERE paypal_order_id = ${paypal_order_id.trim()}`;
+    } catch (dbErr) {
+      console.error('[paypal/capture-order] DB update failed:', dbErr.message);
+    }
+
     return res.status(200).json({ ok: true, ...result });
   } catch (e) {
     console.error('[paypal/capture-order]', e.message);
