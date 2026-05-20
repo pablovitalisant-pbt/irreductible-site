@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="dark" lang="es" style="overflow-x: hidden">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout | IRREDUCTIBLE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "surface":"#131313","background":"#0a0a0a","primary":"#b8922a",
+        "on-surface":"#e5e2e1","on-surface-variant":"#d1c5b0",
+        "on-primary":"#3e2e00","outline":"#9a907d",
+        "outline-variant":"#4e4636","secondary":"#98ccf6",
+        "steel-blue":"#4a7fa5","surface-container":"#201f1f",
+        "surface-container-low":"#1c1b1b","surface-container-high":"#2a2a2a",
+        "surface-container-lowest":"#0e0e0e","error":"#ffb4ab",
+        "on-error":"#690005","error-container":"#93000a"
+      },
+      borderRadius: { "DEFAULT":"0","lg":"0","xl":"0","full":"0" },
+      fontFamily: {
+        "headline-lg":["Bebas Neue"],"headline-md":["Bebas Neue"],
+        "body-lg":["Inter"],"body-md":["Inter"],
+        "label-caps":["JetBrains Mono"],"data-mono":["JetBrains Mono"]
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { background-color:#0a0a0a; color:#e5e2e1; -webkit-font-smoothing:antialiased; }
+  .hud-bracket-tl { border-top:2px solid #4a7fa5; border-left:2px solid #4a7fa5; width:24px; height:24px; position:absolute; top:0; left:0; }
+  .hud-bracket-br { border-bottom:2px solid #4a7fa5; border-right:2px solid #4a7fa5; width:24px; height:24px; position:absolute; bottom:0; right:0; }
+  .border-technical { border:1px solid rgba(74,127,165,0.25); }
+  input, select { background:#1c1b1b !important; border:1px solid #4e4636 !important; color:#e5e2e1 !important; border-radius:0 !important; font-family:'JetBrains Mono',monospace; font-size:14px; padding:10px 12px; width:100%; }
+  input:focus, select:focus { border-color:#b8922a !important; outline:none; box-shadow:0 0 0 1px rgba(184,146,42,0.3); }
+  label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#d1c5b0; text-transform:uppercase; display:block; margin-bottom:4px; }
+  .field-error input, .field-error select { border-color:#ffb4ab !important; }
+  .error-msg { font-family:'JetBrains Mono',monospace; font-size:11px; color:#ffb4ab; margin-top:4px; display:none; }
+  .field-error .error-msg { display:block; }
+  .btn-primary { background:#b8922a; color:#3e2e00; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.08em; padding:12px 32px; border:none; cursor:pointer; text-transform:uppercase; width:100%; }
+  .btn-primary:hover { filter:brightness(1.15); }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; filter:none; }
+  .cost-line { display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(78,70,54,0.3); }
+  .cost-line.total { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#b8922a; border-bottom:none; padding-top:12px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-4 md:px-16 py-4">
+  <a href="/libro.html" class="font-headline-md text-2xl tracking-widest text-on-surface no-underline" style="font-family:'Bebas Neue',sans-serif;">IRREDUCTIBLE</a>
+  <span class="font-data-mono text-[10px] text-steel-blue tracking-[0.2em] hidden md:block">CHECKOUT // SECURE</span>
+</header>
+
+<main class="pt-28 pb-20 px-4 md:px-16 max-w-2xl mx-auto">
+
+<!-- HEADER -->
+<div class="mb-12 space-y-2">
+  <div class="flex items-center gap-3 mb-4">
+    <span class="font-data-mono text-[10px] text-steel-blue tracking-[0.2em] uppercase">Transacción segura</span>
+    <div class="flex-1 h-px bg-primary/20"></div>
+    <span class="font-data-mono text-[10px] text-primary">SSL/TLS 1.3</span>
+  </div>
+  <h1 class="text-on-surface uppercase" style="font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,6vw,56px); line-height:0.95; letter-spacing:0.02em;">Finalizar compra</h1>
+  <p class="text-on-surface-variant text-sm" style="font-family:'Inter',sans-serif;">IRREDUCTIBLE. La Anomalía Persistente — Pablo Bravo</p>
+</div>
+
+<!-- FORM -->
+<form id="checkout-form" novalidate>
+
+  <!-- Cantidad -->
+  <fieldset class="border-technical p-6 mb-6 relative bg-surface-container-low/50">
+    <div class="hud-bracket-tl opacity-30"></div>
+    <div class="hud-bracket-br opacity-30"></div>
+    <legend class="font-label-caps text-primary px-2">01 // CANTIDAD</legend>
+    <label for="quantity">Unidades</label>
+    <select id="quantity" name="quantity" class="w-full md:w-32">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+      <option value="4">4</option><option value="5">5</option>
+    </select>
+    <span class="error-msg">Seleccioná entre 1 y 5 unidades</span>
+  </fieldset>
+
+  <!-- Datos del comprador -->
+  <fieldset class="border-technical p-6 mb-6 relative bg-surface-container-low/50">
+    <div class="hud-bracket-tl opacity-30"></div>
+    <div class="hud-bracket-br opacity-30"></div>
+    <legend class="font-label-caps text-primary px-2">02 // COMPRADOR</legend>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-group">
+        <label for="buyer_name">Nombre completo</label>
+        <input id="buyer_name" name="buyer_name" type="text" autocomplete="name" placeholder="Ej: María García"/>
+        <span class="error-msg">Requerido</span>
+      </div>
+      <div class="form-group">
+        <label for="buyer_email">Email</label>
+        <input id="buyer_email" name="buyer_email" type="email" autocomplete="email" placeholder="maria@ejemplo.com"/>
+        <span class="error-msg">Email no válido</span>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Dirección de envío -->
+  <fieldset class="border-technical p-6 mb-6 relative bg-surface-container-low/50">
+    <div class="hud-bracket-tl opacity-30"></div>
+    <div class="hud-bracket-br opacity-30"></div>
+    <legend class="font-label-caps text-primary px-2">03 // DIRECCIÓN DE ENVÍO</legend>
+    <div class="space-y-4">
+      <div class="form-group">
+        <label for="address_line1">Dirección (línea 1)</label>
+        <input id="address_line1" name="address_line1" type="text" autocomplete="address-line1" placeholder="Calle 123, Apt 4B"/>
+        <span class="error-msg">Requerido</span>
+      </div>
+      <div class="form-group">
+        <label for="address_line2">Dirección (línea 2) <span class="text-outline font-normal">— opcional</span></label>
+        <input id="address_line2" name="address_line2" type="text" autocomplete="address-line2"/>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          <label for="city">Ciudad</label>
+          <input id="city" name="city" type="text" autocomplete="address-level2"/>
+          <span class="error-msg">Requerido</span>
+        </div>
+        <div class="form-group">
+          <label for="state">Estado / Provincia <span class="text-outline font-normal">— opcional</span></label>
+          <input id="state" name="state" type="text" autocomplete="address-level1"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          <label for="country">País</label>
+          <select id="country" name="country" autocomplete="country">
+            <option value="">Seleccionar país…</option>
+            <option value="US">Estados Unidos</option>
+            <option value="CA">Canadá</option>
+            <option value="MX">México</option>
+            <option value="ES">España</option>
+            <option value="AR">Argentina</option>
+            <option value="CL">Chile</option>
+            <option value="CO">Colombia</option>
+            <option value="PE">Perú</option>
+            <option value="GB">Reino Unido</option>
+            <option value="DE">Alemania</option>
+            <option value="FR">Francia</option>
+            <option value="IT">Italia</option>
+            <option value="AU">Australia</option>
+            <option value="JP">Japón</option>
+            <option value="BR">Brasil</option>
+            <option value="UY">Uruguay</option>
+          </select>
+          <span class="error-msg">Seleccioná un país</span>
+        </div>
+        <div class="form-group">
+          <label for="postal_code">Código postal</label>
+          <input id="postal_code" name="postal_code" type="text" autocomplete="postal-code"/>
+          <span class="error-msg">Requerido</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="phone">Teléfono <span class="text-outline font-normal">— para el transportista</span></label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 555 000 0000"/>
+        <span class="error-msg">Requerido</span>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Opción de envío (placeholder — se llena dinámicamente en SLICE-01b) -->
+  <fieldset class="border-technical p-6 mb-6 relative bg-surface-container-low/50">
+    <div class="hud-bracket-tl opacity-30"></div>
+    <div class="hud-bracket-br opacity-30"></div>
+    <legend class="font-label-caps text-primary px-2">04 // ENVÍO</legend>
+    <div class="form-group">
+      <label for="shipping_option">Método de envío</label>
+      <select id="shipping_option" name="shipping_option" disabled>
+        <option value="">Primero seleccioná un país</option>
+      </select>
+      <span class="error-msg">Seleccioná un método de envío</span>
+    </div>
+    <p id="shipping-unavailable" class="hidden font-data-mono text-xs text-error mt-2">
+      No hay envío disponible para este país. <a href="mailto:pablo@irreductible.site" class="text-primary underline">Contactanos</a>.
+    </p>
+  </fieldset>
+
+  <!-- Resumen de costos (placeholder hasta SLICE-02) -->
+  <fieldset class="border-technical p-6 mb-8 relative bg-surface-container-low/50">
+    <div class="hud-bracket-tl opacity-30"></div>
+    <div class="hud-bracket-br opacity-30"></div>
+    <legend class="font-label-caps text-primary px-2">05 // RESUMEN</legend>
+    <div class="cost-line"><span>Impresión (×1)</span><span>—</span></div>
+    <div class="cost-line"><span>Fulfillment</span><span>—</span></div>
+    <div class="cost-line"><span>Envío</span><span>—</span></div>
+    <div class="cost-line total"><span>Total</span><span>—</span></div>
+    <p class="font-data-mono text-[10px] text-outline mt-4">Los costos exactos se calculan en tiempo real al seleccionar país y método de envío.</p>
+  </fieldset>
+
+  <button type="submit" class="btn-primary">Verificar y proceder al pago</button>
+
+</form>
+</main>
+
+<!-- FOOTER -->
+<footer class="border-t border-outline-variant/30 px-4 md:px-16 py-8 text-center">
+  <p class="font-data-mono text-[10px] text-outline">
+    IRREDUCTIBLE © 2025 Pablo Bravo · Pago seguro vía PayPal · Impresión y envío por Lulu
+  </p>
+</footer>
+
+<script>
+// ── Validación del formulario de checkout ──────────────────────
+const form = document.getElementById('checkout-form');
+const countrySelect = document.getElementById('country');
+const shippingSelect = document.getElementById('shipping_option');
+const shippingUnavailable = document.getElementById('shipping-unavailable');
+const submitBtn = form.querySelector('button[type="submit"]');
+
+const REQUIRED = ['buyer_name','buyer_email','address_line1','city','country','postal_code','phone','shipping_option'];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getField(id) { return document.getElementById(id); }
+
+function fieldGroup(el) { return el.closest('.form-group') || el.parentElement; }
+
+function showError(el, msg) {
+  const group = fieldGroup(el);
+  group?.classList.add('field-error');
+  const span = group?.querySelector('.error-msg');
+  if (span) span.textContent = msg;
+}
+
+function clearErrors() {
+  form.querySelectorAll('.field-error').forEach(g => g.classList.remove('field-error'));
+}
+
+function validateField(name, value) {
+  if (REQUIRED.includes(name) && !value.trim()) return 'Requerido';
+  if (name === 'buyer_email' && value.trim() && !EMAIL_RE.test(value.trim())) return 'Email no válido';
+  if (name === 'quantity') { const n = parseInt(value); if (!n || n < 1 || n > 10) return 'Cantidad debe ser entre 1 y 10'; }
+  return null;
+}
+
+function validate() {
+  clearErrors();
+  let errors = [];
+  for (const name of REQUIRED) {
+    const el = getField(name);
+    if (!el) continue;
+    const err = validateField(name, el.value);
+    if (err) { showError(el, err); errors.push({ field: name, error: err }); }
+  }
+  // Quantity is not in REQUIRED but needs validation
+  const qtyEl = getField('quantity');
+  if (qtyEl) {
+    const qtyErr = validateField('quantity', qtyEl.value);
+    if (qtyErr) { showError(qtyEl, qtyErr); errors.push({ field: 'quantity', error: qtyErr }); }
+  }
+  return errors;
+}
+
+// ── País → opciones de envío (placeholder hasta SLICE-02) ──────
+const SHIPPING_MOCK = {
+  US: [{ id:'us_mail', name:'Mail (5-8 días)', days:'5-8' },{ id:'us_priority', name:'Priority Mail (3-5 días)', days:'3-5' },{ id:'us_express', name:'Express (1-2 días)', days:'1-2' }],
+  CA: [{ id:'ca_mail', name:'Mail (7-12 días)', days:'7-12' },{ id:'ca_priority', name:'Priority (4-7 días)', days:'4-7' }],
+  MX: [{ id:'mx_mail', name:'Mail (10-20 días)', days:'10-20' }],
+  ES: [{ id:'es_mail', name:'Mail (8-14 días)', days:'8-14' },{ id:'es_express', name:'Express (3-6 días)', days:'3-6' }],
+  AR: [{ id:'ar_mail', name:'Mail (15-25 días)', days:'15-25' }],
+  CL: [{ id:'cl_mail', name:'Mail (12-20 días)', days:'12-20' }],
+  CO: [{ id:'co_mail', name:'Mail (12-20 días)', days:'12-20' }],
+  PE: [{ id:'pe_mail', name:'Mail (12-20 días)', days:'12-20' }],
+  GB: [{ id:'gb_mail', name:'Mail (6-10 días)', days:'6-10' },{ id:'gb_express', name:'Express (2-4 días)', days:'2-4' }],
+  DE: [{ id:'de_mail', name:'Mail (5-9 días)', days:'5-9' },{ id:'de_express', name:'Express (2-4 días)', days:'2-4' }],
+  FR: [{ id:'fr_mail', name:'Mail (5-9 días)', days:'5-9' },{ id:'fr_express', name:'Express (2-4 días)', days:'2-4' }],
+  IT: [{ id:'it_mail', name:'Mail (6-10 días)', days:'6-10' }],
+  AU: [{ id:'au_mail', name:'Mail (8-14 días)', days:'8-14' },{ id:'au_express', name:'Express (3-5 días)', days:'3-5' }],
+  JP: [{ id:'jp_mail', name:'Mail (7-12 días)', days:'7-12' },{ id:'jp_express', name:'Express (3-5 días)', days:'3-5' }],
+  BR: [{ id:'br_mail', name:'Mail (15-25 días)', days:'15-25' }],
+  UY: [{ id:'uy_mail', name:'Mail (12-20 días)', days:'12-20' }]
+};
+
+countrySelect.addEventListener('change', function() {
+  const code = this.value;
+  shippingSelect.innerHTML = '<option value="">Seleccionar método…</option>';
+  shippingSelect.disabled = true;
+  shippingUnavailable.classList.add('hidden');
+  if (!code) return;
+  const opts = SHIPPING_MOCK[code];
+  if (!opts || opts.length === 0) {
+    shippingUnavailable.classList.remove('hidden');
+    return;
+  }
+  opts.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.id; opt.textContent = o.name;
+    shippingSelect.appendChild(opt);
+  });
+  shippingSelect.disabled = false;
+});
+
+// ── Submit handler ─────────────────────────────────────────────
+let submitting = false;
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (submitting) return;
+  const errors = validate();
+  if (errors.length > 0) {
+    errors[0].field && getField(errors[0].field)?.focus();
+    return;
+  }
+  submitting = true;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Calculando costos…';
+
+  // SLICE-02: llamar a POST /api/lulu/calculate
+  // SLICE-03: redirigir a flujo PayPal
+  console.log('Form valid — listo para SLICE-02', Object.fromEntries(new FormData(form)));
+  submitBtn.textContent = 'Próximamente: pago con PayPal';
+  setTimeout(() => { submitting = false; submitBtn.disabled = false; submitBtn.textContent = 'Verificar y proceder al pago'; }, 2000);
+});
+</script>
+
+</body>
+</html>
