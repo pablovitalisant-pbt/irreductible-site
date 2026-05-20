@@ -18,6 +18,7 @@
     "fase2_tags_waitlist_frontend": true,
     "checkout_page": false,
     "checkout_calculate_api": false,
-    "checkout_paypal_create_api": false
+    "checkout_paypal_create_api": false,
+    "checkout_paypal_capture_api": false
   }
 }
