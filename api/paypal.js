@@ -38,7 +38,7 @@ async function handleCreateOrder(req, res) {
         VALUES (${result.paypal_order_id}, 'pending', ${quantity || breakdown.quantity || 1}, ${breakdown.unit_price_usd || 0}, ${breakdown.shipping_usd || 0}, ${breakdown.fulfillment_fee_usd || 0.75}, ${total_usd}, ${buyer_email}, ${buyer_name.trim()}, ${JSON.stringify(shipping_address || {})}, ${shipping_option || 'unknown'})
       `;
     } catch (dbErr) { console.error('[paypal/create-order] DB insert failed:', dbErr.message); }
-    return res.status(200).json({ ok: true, ...result });
+    return res.status(200).json({ ok: true, id: result.paypal_order_id, ...result });
   } catch (e) {
     console.error('[paypal/create-order]', e.message);
     if (e.message.includes('auth failed')) return res.status(502).json({ error: 'Error de autenticación con PayPal' });
