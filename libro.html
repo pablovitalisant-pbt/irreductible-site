@@ -284,7 +284,7 @@
                     <a href="/checkout" class="cta-scan bg-primary text-on-primary px-10 py-4 font-headline-md text-headline-md hover:brightness-110 transition-all uppercase tracking-widest cursor-pointer inline-block no-underline text-center">
                         CONSEGUIR MI EJEMPLAR
                     </a>
-                    <p class="font-data-mono text-[11px] text-outline text-center">Enviamos a México, Argentina, Chile, Colombia, EE.UU. y toda Latinoamérica. El costo de envío se calcula automáticamente según tu país.</p>
+                    <p class="font-data-mono text-[11px] text-outline text-left">Enviamos a México, Argentina, Chile, Colombia, EE.UU. y toda Latinoamérica. El costo de envío se calcula automáticamente según tu país.</p>
                 </div>
             </div>
         </div>
@@ -481,7 +481,7 @@
         <div class="flex flex-col items-start text-left mb-16">
             <div class="w-1 h-24 bg-gradient-to-b from-primary to-transparent mb-8"></div>
             <h2 class="font-headline-md text-headline-md text-on-surface mb-4">El embudo de eliminación</h2>
-            <p class="font-body-lg text-on-surface-variant stagger-child">IRREDUCTIBLE hace lo contrario. Empieza descartando.</p>
+            <p class="font-body-lg text-on-surface-variant stagger-child">IRREDUCTIBLE es un método de eliminación sistemática. Empieza descartando.</p>
         </div>
         <div class="space-y-6 font-body-lg text-on-surface-variant text-left max-w-2xl">
             <p class="stagger-child">Descarta:</p>
@@ -630,8 +630,7 @@
             <p>Puedo hacer esto porque confío en el trabajo. El riesgo es mío, no tuyo.</p>
         </div>
         <div class="border-t border-primary/30 pt-6 space-y-2">
-            <p class="font-body-lg text-on-surface">— Pablo Bravo</p>
-            <p class="font-data-mono text-[11px] text-steel-blue">[firma]</p>
+            <p class="font-body-lg text-on-surface">— Pablo Bravo | Autor de Irreductible</p>
         </div>
         <p class="font-data-mono text-[10px] text-primary tracking-[0.15em]">STATUS: GUARANTEE_ACTIVE // 30_DAYS // NO_CONDITIONS</p>
     </div>
@@ -675,7 +674,7 @@
 <!-- FOOTER -->
 <footer class="w-full py-8 bg-surface-container-lowest border-t border-outline-variant/20 px-margin-mobile md:px-margin-desktop text-center">
     <p class="font-headline-md text-headline-md text-primary">IRREDUCTIBLE</p>
-    <p class="font-data-mono text-[12px] text-on-surface-variant mt-2">© 2026 Pablo Bravo</p>
+    <p class="font-data-mono text-[12px] text-on-surface-variant mt-2">© <span id="footer-year">2026</span> Pablo Bravo</p>
 </footer>
 
 <script>
@@ -849,5 +848,8 @@
   });
 })();
 </script>
+
+<script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+
 </body>
 </html>
