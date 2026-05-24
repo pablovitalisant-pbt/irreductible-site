@@ -430,7 +430,6 @@ form.addEventListener('submit', function(e) {
 
 // ── PayPal Card Fields ──────────────────────────────────────────
 let cardFieldsInstance = null;
-let paypalLoaded = false;
 
 function showCardError(msg) {
   const el = document.getElementById('card-error');
@@ -441,32 +440,32 @@ function hideCardError() {
   document.getElementById('card-error').classList.add('hidden');
 }
 
-async function loadPayPalSDK() {
-  if (paypalLoaded) return;
+// Precargar SDK al iniciar la página
+(async function preloadPayPalSDK() {
   try {
     const cfgRes = await fetch('/api/config');
-    if (!cfgRes.ok) throw new Error('No se pudo cargar la configuración de pago');
+    if (!cfgRes.ok) throw new Error('No se pudo cargar la configuración');
     const cfg = await cfgRes.json();
     if (!cfg.paypalClientId) throw new Error('PayPal no está configurado');
+    console.log('[paypal] config cargada, clientId prefix:', cfg.paypalClientId.substring(0, 6) + '...');
 
     await new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&components=card-fields`;
-      script.onload = resolve;
+      script.onload = () => { console.log('[paypal] SDK cargado'); resolve(); };
       script.onerror = () => reject(new Error('No se pudo cargar el SDK de PayPal'));
       document.head.appendChild(script);
     });
-    paypalLoaded = true;
   } catch (err) {
-    showCardError(err.message);
-    throw err;
+    console.error('[paypal] Error precargando SDK:', err.message);
   }
-}
+})();
 
 function initCardFields() {
-  if (cardFieldsInstance) return;
-  if (!window.paypal) return;
+  if (cardFieldsInstance) { console.log('[paypal] initCardFields: ya inicializado'); return; }
+  if (!window.paypal) { console.log('[paypal] initCardFields: window.paypal no disponible'); return; }
 
+  console.log('[paypal] initCardFields: creando CardFields...');
   cardFieldsInstance = window.paypal.CardFields({
     style: {
       input: {
@@ -504,11 +503,12 @@ function initCardFields() {
         throw new Error(err.error || 'Error al crear la orden');
       }
       const data = await res.json();
-      // Guardar datos para el print job post-capture
       btnCardPay._checkoutData = { quantity, buyerEmail, buyerName, shippingOption, shippingAddress };
+      console.log('[paypal] orden creada:', data.id);
       return data.id;
     },
     onApprove: async function(data) {
+      console.log('[paypal] onApprove:', data.orderID);
       const checkoutData = btnCardPay._checkoutData || {};
       btnCardPay.disabled = true;
       btnCardPay.textContent = 'Procesando pago…';
@@ -549,12 +549,13 @@ function initCardFields() {
       }
     },
     onError: function(err) {
-      console.error('[paypal/card-fields]', err);
+      console.error('[paypal/card-fields] onError:', err);
       showCardError('Error al procesar el pago. Intentá de nuevo.');
       btnCardPay.disabled = false;
       btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
     },
     onCancel: function() {
+      console.log('[paypal] onCancel');
       document.getElementById('cost-status').textContent = 'Pago cancelado. Podés intentar de nuevo.';
       btnCardPay.disabled = false;
       btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
@@ -566,21 +567,43 @@ function initCardFields() {
     },
   });
 
+  console.log('[paypal] CardFields creado, isEligible:', cardFieldsInstance.isEligible());
+
   if (cardFieldsInstance.isEligible()) {
+    const nameOk = document.getElementById('card-name-field-container');
+    const numOk = document.getElementById('card-number-field-container');
+    const expOk = document.getElementById('card-expiry-field-container');
+    const cvvOk = document.getElementById('card-cvv-field-container');
+    console.log('[paypal] contenedores:', { name: !!nameOk, number: !!numOk, expiry: !!expOk, cvv: !!cvvOk });
+
     cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
     cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
     cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
     cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
+    console.log('[paypal] campos renderizados');
   }
 }
 
 // Inicializar Card Fields cuando se muestra la sección de pago
 const _observer = new MutationObserver(() => {
-  if (!paypalSection.classList.contains('hidden') && !cardFieldsInstance && costBreakdown) {
+  if (!paypalSection.classList.contains('hidden') && costBreakdown) {
+    console.log('[paypal] sección visible, inicializando card fields...');
     btnCardPay.textContent = 'Pagar USD $' + costBreakdown.total_usd.toFixed(2);
-    loadPayPalSDK().then(() => {
-      if (window.paypal) initCardFields();
-    }).catch(() => {});
+    if (!cardFieldsInstance && window.paypal) {
+      initCardFields();
+    } else if (cardFieldsInstance) {
+      console.log('[paypal] cardFieldsInstance ya existe, reutilizando');
+    } else {
+      console.log('[paypal] window.paypal aún no disponible, esperando...');
+      // SDK todavía no cargó — esperar un poco y reintentar
+      const checkInterval = setInterval(() => {
+        if (window.paypal) {
+          clearInterval(checkInterval);
+          initCardFields();
+        }
+      }, 200);
+      setTimeout(() => clearInterval(checkInterval), 10000);
+    }
   }
 });
 _observer.observe(paypalSection, { attributes: true, attributeFilter: ['class'] });
