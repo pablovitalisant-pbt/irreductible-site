@@ -451,7 +451,7 @@ function hideCardError() {
 
     await new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&components=card-fields`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&components=card-fields&buyer-country=US`;
       script.onload = () => { console.log('[paypal] SDK cargado'); resolve(); };
       script.onerror = () => reject(new Error('No se pudo cargar el SDK de PayPal'));
       document.head.appendChild(script);
