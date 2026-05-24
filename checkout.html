@@ -191,14 +191,21 @@ tailwind.config = {
     <div class="hud-bracket-tl opacity-30"></div>
     <div class="hud-bracket-br opacity-30"></div>
     <legend class="font-label-caps text-primary px-2">05 // RESUMEN</legend>
-    <div class="cost-line"><span>Impresión (×1)</span><span>—</span></div>
-    <div class="cost-line"><span>Fulfillment</span><span>—</span></div>
-    <div class="cost-line"><span>Envío</span><span>—</span></div>
-    <div class="cost-line total"><span>Total</span><span>—</span></div>
-    <p class="font-data-mono text-[10px] text-outline mt-4">Los costos exactos se calculan en tiempo real al seleccionar país y método de envío.</p>
+    <div class="cost-line"><span>Impresión (×<span id="cost-qty">1</span>)</span><span id="cost-printing">—</span></div>
+    <div class="cost-line"><span>Fulfillment</span><span id="cost-fulfillment">—</span></div>
+    <div class="cost-line"><span>Envío</span><span id="cost-shipping">—</span></div>
+    <div class="cost-line total"><span>Total</span><span id="cost-total">—</span></div>
+    <p id="cost-status" class="font-data-mono text-[10px] text-outline mt-4">Los costos exactos se calculan en tiempo real al seleccionar país y método de envío.</p>
   </fieldset>
 
-  <button type="submit" class="btn-primary">Verificar y proceder al pago</button>
+  <button type="submit" id="btn-submit" class="btn-primary">Verificar y proceder al pago</button>
+
+  <div id="paypal-section" class="hidden mt-4">
+    <button type="button" id="btn-paypal" class="btn-primary" style="background:#ffc439;color:#111;">
+      Pagar con PayPal
+    </button>
+    <p class="font-data-mono text-[10px] text-outline mt-2 text-center">Serás redirigido a PayPal para completar el pago</p>
+  </div>
 
 </form>
 </main>
@@ -302,9 +309,26 @@ countrySelect.addEventListener('change', function() {
 });
 
 // ── Submit handler ─────────────────────────────────────────────
+const btnSubmit = document.getElementById('btn-submit');
+const btnPaypal = document.getElementById('btn-paypal');
+const paypalSection = document.getElementById('paypal-section');
 let submitting = false;
+let costBreakdown = null;
 
-form.addEventListener('submit', function(e) {
+function buildAddress() {
+  return {
+    name: getField('buyer_name').value.trim(),
+    line1: getField('address_line1').value.trim(),
+    line2: getField('address_line2').value.trim() || undefined,
+    city: getField('city').value.trim(),
+    state: getField('state').value.trim() || undefined,
+    country: getField('country').value,
+    postal_code: getField('postal_code').value.trim(),
+    phone: getField('phone').value.trim(),
+  };
+}
+
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
   if (submitting) return;
   const errors = validate();
@@ -313,15 +337,151 @@ form.addEventListener('submit', function(e) {
     return;
   }
   submitting = true;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Calculando costos…';
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = 'Calculando costos…';
 
-  // SLICE-02: llamar a POST /api/lulu/calculate
-  // SLICE-03: redirigir a flujo PayPal
-  console.log('Form valid — listo para SLICE-02', Object.fromEntries(new FormData(form)));
-  submitBtn.textContent = 'Próximamente: pago con PayPal';
-  setTimeout(() => { submitting = false; submitBtn.disabled = false; submitBtn.textContent = 'Verificar y proceder al pago'; }, 2000);
+  const payload = {
+    country: getField('country').value,
+    shipping_option: getField('shipping_option').value,
+    quantity: parseInt(getField('quantity').value, 10),
+  };
+
+  try {
+    const res = await fetch('/api/lulu/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al calcular costos');
+    }
+    const data = await res.json();
+    costBreakdown = data.breakdown;
+
+    document.getElementById('cost-qty').textContent = costBreakdown.quantity;
+    document.getElementById('cost-printing').textContent = `USD $${costBreakdown.printing_total_usd.toFixed(2)}`;
+    document.getElementById('cost-fulfillment').textContent = `USD $${costBreakdown.fulfillment_fee_usd.toFixed(2)}`;
+    document.getElementById('cost-shipping').textContent = `USD $${costBreakdown.shipping_usd.toFixed(2)}`;
+    document.getElementById('cost-total').textContent = `USD $${costBreakdown.total_usd.toFixed(2)}`;
+    document.getElementById('cost-status').textContent = 'Costos calculados en tiempo real vía Lulu API.';
+
+    btnSubmit.classList.add('hidden');
+    paypalSection.classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('cost-status').textContent = 'Error: ' + err.message;
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = 'Reintentar';
+    submitting = false;
+  }
 });
+
+// ── PayPal button ───────────────────────────────────────────────
+btnPaypal.addEventListener('click', async function() {
+  if (!costBreakdown) return;
+  btnPaypal.disabled = true;
+  btnPaypal.textContent = 'Conectando con PayPal…';
+
+  const buyerName = getField('buyer_name').value.trim();
+  const buyerEmail = getField('buyer_email').value.trim();
+  const quantity = parseInt(getField('quantity').value, 10);
+  const shippingOption = getField('shipping_option').value;
+  const shippingAddress = buildAddress();
+
+  const baseUrl = window.location.origin + window.location.pathname;
+
+  const payload = {
+    total_usd: costBreakdown.total_usd,
+    breakdown: costBreakdown,
+    buyer_email: buyerEmail,
+    buyer_name: buyerName,
+    quantity,
+    shipping_option: shippingOption,
+    shipping_address: shippingAddress,
+    return_url: baseUrl + '?capture=1',
+    cancel_url: baseUrl,
+  };
+
+  try {
+    const res = await fetch('/api/paypal/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al crear orden PayPal');
+    }
+    const data = await res.json();
+
+    sessionStorage.setItem('paypal_order_id', data.paypal_order_id);
+    sessionStorage.setItem('checkout_quantity', quantity);
+    sessionStorage.setItem('checkout_buyer_email', buyerEmail);
+    sessionStorage.setItem('checkout_buyer_name', buyerName);
+    sessionStorage.setItem('checkout_shipping_option', shippingOption);
+    sessionStorage.setItem('checkout_shipping_address', JSON.stringify(shippingAddress));
+
+    if (data.approval_url) {
+      window.location.href = data.approval_url;
+    } else {
+      throw new Error('No se recibió URL de aprobación de PayPal');
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btnPaypal.disabled = false;
+    btnPaypal.textContent = 'Pagar con PayPal';
+  }
+});
+
+// ── PayPal return: capture + create print job ───────────────────
+async function handleCaptureReturn() {
+  const paypalOrderId = sessionStorage.getItem('paypal_order_id');
+  if (!paypalOrderId) return;
+
+  sessionStorage.removeItem('paypal_order_id');
+  btnSubmit.classList.add('hidden');
+  paypalSection.classList.add('hidden');
+  document.getElementById('cost-status').textContent = 'Capturando pago…';
+
+  try {
+    const capRes = await fetch('/api/paypal/capture-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paypal_order_id: paypalOrderId }),
+    });
+    if (!capRes.ok) {
+      const err = await capRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al capturar pago');
+    }
+
+    document.getElementById('cost-status').textContent = 'Pago confirmado. Creando orden de impresión…';
+
+    const quantity = parseInt(sessionStorage.getItem('checkout_quantity') || '1', 10);
+    const buyerEmail = sessionStorage.getItem('checkout_buyer_email') || '';
+    const buyerName = sessionStorage.getItem('checkout_buyer_name') || '';
+    const shippingOption = sessionStorage.getItem('checkout_shipping_option') || '';
+    const shippingAddress = JSON.parse(sessionStorage.getItem('checkout_shipping_address') || '{}');
+
+    await fetch('/api/lulu/create-print-job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quantity, buyer_email: buyerEmail, buyer_name: buyerName,
+        shipping_address: shippingAddress, shipping_option: shippingOption,
+        paypal_order_id: paypalOrderId,
+      }),
+    });
+
+    ['checkout_quantity','checkout_buyer_email','checkout_buyer_name','checkout_shipping_option','checkout_shipping_address'].forEach(k => sessionStorage.removeItem(k));
+    window.location.href = '/checkout/confirmation.html?order=' + encodeURIComponent(paypalOrderId);
+  } catch (err) {
+    alert('Error al procesar el pago: ' + err.message + '. Contactanos a pablo@irreductible.site con tu PayPal Order ID: ' + paypalOrderId);
+  }
+}
+
+if (new URLSearchParams(window.location.search).get('capture') === '1') {
+  handleCaptureReturn();
+}
 </script>
 
 </body>

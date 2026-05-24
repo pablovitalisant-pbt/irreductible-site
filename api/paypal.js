@@ -22,7 +22,7 @@ async function handleCreateOrder(req, res) {
   let body;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; }
   catch { return res.status(400).json({ error: 'Body JSON inválido' }); }
-  const { total_usd, breakdown, buyer_email, buyer_name, shipping_address, shipping_option, quantity } = body || {};
+  const { total_usd, breakdown, buyer_email, buyer_name, shipping_address, shipping_option, quantity, return_url, cancel_url } = body || {};
   if (!total_usd || typeof total_usd !== 'number') return res.status(400).json({ error: 'total_usd es requerido (number)' });
   if (total_usd <= 0) return res.status(400).json({ error: 'total_usd debe ser mayor a 0' });
   if (total_usd > 500) return res.status(400).json({ error: 'total_usd máximo es USD 500' });
@@ -30,7 +30,7 @@ async function handleCreateOrder(req, res) {
   if (!buyer_name || buyer_name.trim().length < 2) return res.status(400).json({ error: 'buyer_name es requerido' });
   if (!breakdown || typeof breakdown !== 'object') return res.status(400).json({ error: 'breakdown es requerido' });
   try {
-    const result = await createOrder({ total_usd, breakdown, buyer_email, buyer_name: buyer_name.trim() });
+    const result = await createOrder({ total_usd, breakdown, buyer_email, buyer_name: buyer_name.trim(), return_url, cancel_url });
     try {
       const sql = getSql();
       await sql`
