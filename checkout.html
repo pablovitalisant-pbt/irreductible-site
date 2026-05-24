@@ -40,7 +40,6 @@ tailwind.config = {
   input:focus, select:focus { border-color:#b8922a !important; outline:none; box-shadow:0 0 0 1px rgba(184,146,42,0.3); }
   label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#d1c5b0; text-transform:uppercase; display:block; margin-bottom:4px; }
   .field-error input, .field-error select { border-color:#ffb4ab !important; }
-  .card-field-container { background:#1c1b1b; border:1px solid #4e4636; height:46px; }
   .error-msg { font-family:'JetBrains Mono',monospace; font-size:11px; color:#ffb4ab; margin-top:4px; display:none; }
   .field-error .error-msg { display:block; }
   .btn-primary { background:#b8922a; color:#3e2e00; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.08em; padding:12px 32px; border:none; cursor:pointer; text-transform:uppercase; width:100%; }
@@ -203,18 +202,12 @@ tailwind.config = {
 
   <div id="paypal-section" class="hidden mt-4">
     <div class="border-technical p-6 bg-surface-container-low/50">
-      <span class="font-label-caps text-primary" style="display:block;margin-bottom:16px;">06 // PAGO CON TARJETA</span>
-      <div id="card-name-field-container" class="card-field-container mb-4"></div>
-      <div id="card-number-field-container" class="card-field-container mb-4"></div>
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div id="card-expiry-field-container" class="card-field-container"></div>
-        <div id="card-cvv-field-container" class="card-field-container"></div>
-      </div>
-      <p class="font-data-mono text-[10px] text-outline mt-2">Pago seguro procesado por PayPal. No almacenamos los datos de tu tarjeta.</p>
+      <div class="hud-bracket-tl opacity-30"></div>
+      <div class="hud-bracket-br opacity-30"></div>
+      <span class="font-label-caps text-primary" style="display:block;margin-bottom:16px;">06 // PAGO</span>
+      <div id="paypal-button-container"></div>
+      <p class="font-data-mono text-[10px] text-outline mt-2">Serás redirigido a PayPal para completar el pago de forma segura.</p>
     </div>
-    <button type="button" id="btn-card-pay" class="btn-primary mt-4" disabled>
-      Pagar USD $—
-    </button>
     <p id="card-error" class="hidden font-data-mono text-[11px] text-error mt-2"></p>
   </div>
 
@@ -320,7 +313,6 @@ countrySelect.addEventListener('change', function() {
 
 // ── Auto-calcular costos al cambiar país, envío o cantidad ──────
 const btnSubmit = document.getElementById('btn-submit');
-const btnCardPay = document.getElementById('btn-card-pay');
 const paypalSection = document.getElementById('paypal-section');
 let costBreakdown = null;
 let calculating = false;
@@ -428,8 +420,8 @@ form.addEventListener('submit', function(e) {
   paypalSection.classList.remove('hidden');
 });
 
-// ── PayPal Card Fields ──────────────────────────────────────────
-let cardFieldsInstance = null;
+// ── PayPal Buttons ─────────────────────────────────────────────
+let paypalButtonsRendered = false;
 
 function showCardError(msg) {
   const el = document.getElementById('card-error');
@@ -451,7 +443,7 @@ function hideCardError() {
 
     await new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&components=card-fields&intent=capture&buyer-country=US`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&components=buttons&intent=capture`;
       script.onload = () => { console.log('[paypal] SDK cargado'); resolve(); };
       script.onerror = () => reject(new Error('No se pudo cargar el SDK de PayPal'));
       document.head.appendChild(script);
@@ -461,21 +453,18 @@ function hideCardError() {
   }
 })();
 
-function initCardFields() {
-  if (cardFieldsInstance) { console.log('[paypal] initCardFields: ya inicializado'); return; }
-  if (!window.paypal) { console.log('[paypal] initCardFields: window.paypal no disponible'); return; }
+function renderPayPalButton() {
+  if (paypalButtonsRendered) { console.log('[paypal] botón ya renderizado'); return; }
+  if (!window.paypal) { console.log('[paypal] window.paypal no disponible'); return; }
 
-  console.log('[paypal] initCardFields: creando CardFields...');
-  cardFieldsInstance = window.paypal.CardFields({
+  console.log('[paypal] renderizando PayPal Buttons...');
+  window.paypal.Buttons({
     style: {
-      input: {
-        'font-size': '14px',
-        'font-family': '"JetBrains Mono", monospace',
-        'color': '#e5e2e1',
-        'padding': '10px 12px',
-      },
-      ':focus': { 'color': '#e5e2e1' },
-      '.invalid': { 'color': '#ffb4ab' },
+      layout: 'vertical',
+      color: 'gold',
+      shape: 'rect',
+      label: 'paypal',
+      tagline: false,
     },
     createOrder: async function() {
       hideCardError();
@@ -503,15 +492,11 @@ function initCardFields() {
         throw new Error(err.error || 'Error al crear la orden');
       }
       const data = await res.json();
-      btnCardPay._checkoutData = { quantity, buyerEmail, buyerName, shippingOption, shippingAddress };
       console.log('[paypal] orden creada:', data.id);
       return data.id;
     },
     onApprove: async function(data) {
       console.log('[paypal] onApprove:', data.orderID);
-      const checkoutData = btnCardPay._checkoutData || {};
-      btnCardPay.disabled = true;
-      btnCardPay.textContent = 'Procesando pago…';
       document.getElementById('cost-status').textContent = 'Capturando pago…';
 
       try {
@@ -527,15 +512,18 @@ function initCardFields() {
 
         document.getElementById('cost-status').textContent = 'Pago confirmado. Creando orden de impresión…';
 
+        const buyerName = getField('buyer_name').value.trim();
+        const buyerEmail = getField('buyer_email').value.trim();
+        const quantity = parseInt(getField('quantity').value, 10);
+        const shippingOption = getField('shipping_option').value;
+        const shippingAddress = buildAddress();
+
         await fetch('/api/lulu/create-print-job', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            quantity: checkoutData.quantity || 1,
-            buyer_email: checkoutData.buyerEmail || '',
-            buyer_name: checkoutData.buyerName || '',
-            shipping_address: checkoutData.shippingAddress || {},
-            shipping_option: checkoutData.shippingOption || '',
+            quantity, buyer_email: buyerEmail, buyer_name: buyerName,
+            shipping_address: shippingAddress, shipping_option: shippingOption,
             paypal_order_id: data.orderID,
           }),
         });
@@ -543,141 +531,35 @@ function initCardFields() {
         window.location.href = '/checkout/confirmation.html?order=' + encodeURIComponent(data.orderID);
       } catch (err) {
         showCardError(err.message);
-        btnCardPay.disabled = false;
-        btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
         document.getElementById('cost-status').textContent = '';
       }
-    },
-    onError: function(err) {
-      console.error('[paypal/card-fields] onError:', err);
-      showCardError('Error al procesar el pago. Intentá de nuevo.');
-      btnCardPay.disabled = false;
-      btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
     },
     onCancel: function() {
       console.log('[paypal] onCancel');
       document.getElementById('cost-status').textContent = 'Pago cancelado. Podés intentar de nuevo.';
-      btnCardPay.disabled = false;
-      btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
     },
-    inputEvents: {
-      onChange: function(state) {
-        btnCardPay.disabled = !state.isFormValid;
-      },
+    onError: function(err) {
+      console.error('[paypal] onError:', err);
+      showCardError('Error al procesar el pago. Intentá de nuevo.');
     },
-  });
+  }).render('#paypal-button-container');
 
-  console.log('[paypal] CardFields creado, isEligible:', cardFieldsInstance.isEligible());
-
-  if (cardFieldsInstance.isEligible()) {
-    cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
-    cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
-    cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
-    cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
-    console.log('[paypal] campos renderizados');
-
-    btnCardPay.addEventListener('click', function() {
-      hideCardError();
-      btnCardPay.disabled = true;
-      btnCardPay.textContent = 'Procesando…';
-      document.getElementById('cost-status').textContent = 'Verificando tarjeta…';
-
-      const addr = buildAddress();
-      cardFieldsInstance.submit({
-        cardholderName: getField('buyer_name').value.trim(),
-        billingAddress: {
-          addressLine1: addr.line1 || '',
-          addressLine2: addr.line2 || '',
-          adminArea1: addr.state || '',
-          adminArea2: addr.city || '',
-          countryCode: addr.country || '',
-          postalCode: addr.postal_code || '',
-        },
-      }).catch(function(err) {
-        console.error('[paypal] submit error:', err);
-        showCardError('Error al procesar la tarjeta. Verificá los datos e intentá de nuevo.');
-        btnCardPay.disabled = false;
-        btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
-        document.getElementById('cost-status').textContent = '';
-      });
-    }, { once: true });
-    console.log('[paypal] event listener agregado a btnCardPay');
-  } else {
-    // Fallback: PayPal redirect. Los card fields no están disponibles
-    // porque la app PayPal no tiene Advanced Card Payments habilitado.
-    console.warn('[paypal] CardFields no disponible — la cuenta PayPal no tiene Advanced Card Payments. Usá el botón redirect de PayPal.');
-    document.getElementById('card-name-field-container').innerHTML = '<p class="font-data-mono text-[13px] text-outline p-2">Pago con tarjeta no disponible en este momento.</p>';
-    document.getElementById('card-number-field-container').style.display = 'none';
-    document.getElementById('card-expiry-field-container').parentElement.style.display = 'none';
-    btnCardPay.textContent = 'Pagar con PayPal';
-    btnCardPay.disabled = false;
-    btnCardPay.classList.add('btn-primary');
-    btnCardPay.style.background = '#ffc439';
-    btnCardPay.style.color = '#111';
-
-    btnCardPay.addEventListener('click', async function() {
-      btnCardPay.disabled = true;
-      btnCardPay.textContent = 'Conectando con PayPal…';
-      const buyerName = getField('buyer_name').value.trim();
-      const buyerEmail = getField('buyer_email').value.trim();
-      const qty = parseInt(getField('quantity').value, 10);
-      const shippingOption = getField('shipping_option').value;
-      const shippingAddress = buildAddress();
-      const baseUrl = window.location.origin + window.location.pathname;
-
-      try {
-        const res = await fetch('/api/paypal/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            total_usd: costBreakdown.total_usd,
-            breakdown: costBreakdown,
-            buyer_email: buyerEmail,
-            buyer_name: buyerName,
-            quantity: qty,
-            shipping_option: shippingOption,
-            shipping_address: shippingAddress,
-            return_url: baseUrl + '?capture=1',
-            cancel_url: baseUrl,
-          }),
-        });
-        if (!res.ok) throw new Error('Error al crear orden PayPal');
-        const data = await res.json();
-
-        sessionStorage.setItem('paypal_order_id', data.paypal_order_id);
-        sessionStorage.setItem('checkout_quantity', qty);
-        sessionStorage.setItem('checkout_buyer_email', buyerEmail);
-        sessionStorage.setItem('checkout_buyer_name', buyerName);
-        sessionStorage.setItem('checkout_shipping_option', shippingOption);
-        sessionStorage.setItem('checkout_shipping_address', JSON.stringify(shippingAddress));
-
-        if (data.approval_url) window.location.href = data.approval_url;
-        else throw new Error('No se recibió URL de aprobación');
-      } catch (err) {
-        showCardError(err.message);
-        btnCardPay.disabled = false;
-        btnCardPay.textContent = 'Pagar con PayPal';
-      }
-    }, { once: true });
-  }
+  paypalButtonsRendered = true;
+  console.log('[paypal] botón renderizado');
 }
 
-// Inicializar Card Fields cuando se muestra la sección de pago
+// Inicializar PayPal Button cuando se muestra la sección de pago
 const _observer = new MutationObserver(() => {
-  if (!paypalSection.classList.contains('hidden') && costBreakdown) {
-    console.log('[paypal] sección visible, inicializando card fields...');
-    btnCardPay.textContent = 'Pagar USD $' + costBreakdown.total_usd.toFixed(2);
-    if (!cardFieldsInstance && window.paypal) {
-      initCardFields();
-    } else if (cardFieldsInstance) {
-      console.log('[paypal] cardFieldsInstance ya existe, reutilizando');
+  if (!paypalSection.classList.contains('hidden') && costBreakdown && !paypalButtonsRendered) {
+    console.log('[paypal] sección visible, inicializando botón...');
+    if (window.paypal) {
+      renderPayPalButton();
     } else {
-      console.log('[paypal] window.paypal aún no disponible, esperando...');
-      // SDK todavía no cargó — esperar un poco y reintentar
+      console.log('[paypal] SDK aún no cargado, esperando...');
       const checkInterval = setInterval(() => {
         if (window.paypal) {
           clearInterval(checkInterval);
-          initCardFields();
+          renderPayPalButton();
         }
       }, 200);
       setTimeout(() => clearInterval(checkInterval), 10000);
@@ -685,56 +567,6 @@ const _observer = new MutationObserver(() => {
   }
 });
 _observer.observe(paypalSection, { attributes: true, attributeFilter: ['class'] });
-
-// ── PayPal redirect fallback: capture + create print job ──────────
-async function handleCaptureReturn() {
-  const paypalOrderId = sessionStorage.getItem('paypal_order_id');
-  if (!paypalOrderId) return;
-
-  sessionStorage.removeItem('paypal_order_id');
-  btnSubmit.classList.add('hidden');
-  paypalSection.classList.add('hidden');
-  document.getElementById('cost-status').textContent = 'Capturando pago…';
-
-  try {
-    const capRes = await fetch('/api/paypal/capture-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paypal_order_id: paypalOrderId }),
-    });
-    if (!capRes.ok) {
-      const err = await capRes.json().catch(() => ({}));
-      throw new Error(err.error || 'Error al capturar pago');
-    }
-
-    document.getElementById('cost-status').textContent = 'Pago confirmado. Creando orden de impresión…';
-
-    const quantity = parseInt(sessionStorage.getItem('checkout_quantity') || '1', 10);
-    const buyerEmail = sessionStorage.getItem('checkout_buyer_email') || '';
-    const buyerName = sessionStorage.getItem('checkout_buyer_name') || '';
-    const shippingOption = sessionStorage.getItem('checkout_shipping_option') || '';
-    const shippingAddress = JSON.parse(sessionStorage.getItem('checkout_shipping_address') || '{}');
-
-    await fetch('/api/lulu/create-print-job', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        quantity, buyer_email: buyerEmail, buyer_name: buyerName,
-        shipping_address: shippingAddress, shipping_option: shippingOption,
-        paypal_order_id: paypalOrderId,
-      }),
-    });
-
-    ['checkout_quantity','checkout_buyer_email','checkout_buyer_name','checkout_shipping_option','checkout_shipping_address'].forEach(k => sessionStorage.removeItem(k));
-    window.location.href = '/checkout/confirmation.html?order=' + encodeURIComponent(paypalOrderId);
-  } catch (err) {
-    alert('Error al procesar el pago: ' + err.message + '. Contactanos a pablo@irreductible.site con tu PayPal Order ID: ' + paypalOrderId);
-  }
-}
-
-if (new URLSearchParams(window.location.search).get('capture') === '1') {
-  handleCaptureReturn();
-}
 </script>
 
 </body>
