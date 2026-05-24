@@ -33,15 +33,14 @@ tailwind.config = {
 </script>
 <style>
   body { background-color:#0a0a0a; color:#e5e2e1; -webkit-font-smoothing:antialiased; }
-  .hud-bracket-tl { border-top:2px solid #4a7fa5; border-left:2px solid #4a7fa5; width:24px; height:24px; position:absolute; top:0; left:0; }
-  .hud-bracket-br { border-bottom:2px solid #4a7fa5; border-right:2px solid #4a7fa5; width:24px; height:24px; position:absolute; bottom:0; right:0; }
+  .hud-bracket-tl { pointer-events:none; z-index:0; border-top:2px solid #4a7fa5; border-left:2px solid #4a7fa5; width:24px; height:24px; position:absolute; top:0; left:0; }
+  .hud-bracket-br { pointer-events:none; z-index:0; border-bottom:2px solid #4a7fa5; border-right:2px solid #4a7fa5; width:24px; height:24px; position:absolute; bottom:0; right:0; }
   .border-technical { border:1px solid rgba(74,127,165,0.25); }
   input, select { background:#1c1b1b !important; border:1px solid #4e4636 !important; color:#e5e2e1 !important; border-radius:0 !important; font-family:'JetBrains Mono',monospace; font-size:14px; padding:10px 12px; width:100%; }
   input:focus, select:focus { border-color:#b8922a !important; outline:none; box-shadow:0 0 0 1px rgba(184,146,42,0.3); }
   label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#d1c5b0; text-transform:uppercase; display:block; margin-bottom:4px; }
   .field-error input, .field-error select { border-color:#ffb4ab !important; }
-  .card-field-container { background:#1c1b1b; border:1px solid #4e4636; min-height:44px; }
-  .card-field-container:focus-within { border-color:#b8922a; box-shadow:0 0 0 1px rgba(184,146,42,0.3); }
+  .card-field-container { position:relative; z-index:1; background:#1c1b1b; border:1px solid #4e4636; height:44px; }
   .error-msg { font-family:'JetBrains Mono',monospace; font-size:11px; color:#ffb4ab; margin-top:4px; display:none; }
   .field-error .error-msg { display:block; }
   .btn-primary { background:#b8922a; color:#3e2e00; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.08em; padding:12px 32px; border:none; cursor:pointer; text-transform:uppercase; width:100%; }
