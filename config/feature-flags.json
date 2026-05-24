@@ -16,12 +16,12 @@
     "fase2_email_validation": true,
     "fase2_tags_waitlist_backend": true,
     "fase2_tags_waitlist_frontend": true,
-    "checkout_page": false,
-    "checkout_calculate_api": false,
-    "checkout_paypal_create_api": false,
-    "checkout_paypal_capture_api": false,
-    "checkout_lulu_print_api": false,
-    "checkout_db_orders": false,
-    "checkout_emails": false
+    "checkout_page": true,
+    "checkout_calculate_api": true,
+    "checkout_paypal_create_api": true,
+    "checkout_paypal_capture_api": true,
+    "checkout_lulu_print_api": true,
+    "checkout_db_orders": true,
+    "checkout_emails": true
   }
 }
