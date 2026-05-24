@@ -569,39 +569,97 @@ function initCardFields() {
 
   console.log('[paypal] CardFields creado, isEligible:', cardFieldsInstance.isEligible());
 
-  cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
-  cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
-  cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
-  cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
-  console.log('[paypal] campos renderizados (isEligible ignorado en sandbox)');
+  if (cardFieldsInstance.isEligible()) {
+    cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
+    cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
+    cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
+    cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
+    console.log('[paypal] campos renderizados');
 
-  // Conectar botón de pago con cardFields.submit()
-  btnCardPay.addEventListener('click', function() {
-    hideCardError();
-    btnCardPay.disabled = true;
-    btnCardPay.textContent = 'Procesando…';
-    document.getElementById('cost-status').textContent = 'Verificando tarjeta…';
+    btnCardPay.addEventListener('click', function() {
+      hideCardError();
+      btnCardPay.disabled = true;
+      btnCardPay.textContent = 'Procesando…';
+      document.getElementById('cost-status').textContent = 'Verificando tarjeta…';
 
-    const addr = buildAddress();
-    cardFieldsInstance.submit({
-      cardholderName: getField('buyer_name').value.trim(),
-      billingAddress: {
-        addressLine1: addr.line1 || '',
-        addressLine2: addr.line2 || '',
-        adminArea1: addr.state || '',
-        adminArea2: addr.city || '',
-        countryCode: addr.country || '',
-        postalCode: addr.postal_code || '',
-      },
-    }).catch(function(err) {
-      console.error('[paypal] submit error:', err);
-      showCardError('Error al procesar la tarjeta. Verificá los datos e intentá de nuevo.');
-      btnCardPay.disabled = false;
-      btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
-      document.getElementById('cost-status').textContent = '';
-    });
-  }, { once: true });
-  console.log('[paypal] event listener agregado a btnCardPay');
+      const addr = buildAddress();
+      cardFieldsInstance.submit({
+        cardholderName: getField('buyer_name').value.trim(),
+        billingAddress: {
+          addressLine1: addr.line1 || '',
+          addressLine2: addr.line2 || '',
+          adminArea1: addr.state || '',
+          adminArea2: addr.city || '',
+          countryCode: addr.country || '',
+          postalCode: addr.postal_code || '',
+        },
+      }).catch(function(err) {
+        console.error('[paypal] submit error:', err);
+        showCardError('Error al procesar la tarjeta. Verificá los datos e intentá de nuevo.');
+        btnCardPay.disabled = false;
+        btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
+        document.getElementById('cost-status').textContent = '';
+      });
+    }, { once: true });
+    console.log('[paypal] event listener agregado a btnCardPay');
+  } else {
+    // Fallback: PayPal redirect. Los card fields no están disponibles
+    // porque la app PayPal no tiene Advanced Card Payments habilitado.
+    console.warn('[paypal] CardFields no disponible — la cuenta PayPal no tiene Advanced Card Payments. Usá el botón redirect de PayPal.');
+    document.getElementById('card-name-field-container').innerHTML = '<p class="font-data-mono text-[13px] text-outline p-2">Pago con tarjeta no disponible en este momento.</p>';
+    document.getElementById('card-number-field-container').style.display = 'none';
+    document.getElementById('card-expiry-field-container').parentElement.style.display = 'none';
+    btnCardPay.textContent = 'Pagar con PayPal';
+    btnCardPay.disabled = false;
+    btnCardPay.classList.add('btn-primary');
+    btnCardPay.style.background = '#ffc439';
+    btnCardPay.style.color = '#111';
+
+    btnCardPay.addEventListener('click', async function() {
+      btnCardPay.disabled = true;
+      btnCardPay.textContent = 'Conectando con PayPal…';
+      const buyerName = getField('buyer_name').value.trim();
+      const buyerEmail = getField('buyer_email').value.trim();
+      const qty = parseInt(getField('quantity').value, 10);
+      const shippingOption = getField('shipping_option').value;
+      const shippingAddress = buildAddress();
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      try {
+        const res = await fetch('/api/paypal/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            total_usd: costBreakdown.total_usd,
+            breakdown: costBreakdown,
+            buyer_email: buyerEmail,
+            buyer_name: buyerName,
+            quantity: qty,
+            shipping_option: shippingOption,
+            shipping_address: shippingAddress,
+            return_url: baseUrl + '?capture=1',
+            cancel_url: baseUrl,
+          }),
+        });
+        if (!res.ok) throw new Error('Error al crear orden PayPal');
+        const data = await res.json();
+
+        sessionStorage.setItem('paypal_order_id', data.paypal_order_id);
+        sessionStorage.setItem('checkout_quantity', qty);
+        sessionStorage.setItem('checkout_buyer_email', buyerEmail);
+        sessionStorage.setItem('checkout_buyer_name', buyerName);
+        sessionStorage.setItem('checkout_shipping_option', shippingOption);
+        sessionStorage.setItem('checkout_shipping_address', JSON.stringify(shippingAddress));
+
+        if (data.approval_url) window.location.href = data.approval_url;
+        else throw new Error('No se recibió URL de aprobación');
+      } catch (err) {
+        showCardError(err.message);
+        btnCardPay.disabled = false;
+        btnCardPay.textContent = 'Pagar con PayPal';
+      }
+    }, { once: true });
+  }
 }
 
 // Inicializar Card Fields cuando se muestra la sección de pago
@@ -627,6 +685,56 @@ const _observer = new MutationObserver(() => {
   }
 });
 _observer.observe(paypalSection, { attributes: true, attributeFilter: ['class'] });
+
+// ── PayPal redirect fallback: capture + create print job ──────────
+async function handleCaptureReturn() {
+  const paypalOrderId = sessionStorage.getItem('paypal_order_id');
+  if (!paypalOrderId) return;
+
+  sessionStorage.removeItem('paypal_order_id');
+  btnSubmit.classList.add('hidden');
+  paypalSection.classList.add('hidden');
+  document.getElementById('cost-status').textContent = 'Capturando pago…';
+
+  try {
+    const capRes = await fetch('/api/paypal/capture-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paypal_order_id: paypalOrderId }),
+    });
+    if (!capRes.ok) {
+      const err = await capRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al capturar pago');
+    }
+
+    document.getElementById('cost-status').textContent = 'Pago confirmado. Creando orden de impresión…';
+
+    const quantity = parseInt(sessionStorage.getItem('checkout_quantity') || '1', 10);
+    const buyerEmail = sessionStorage.getItem('checkout_buyer_email') || '';
+    const buyerName = sessionStorage.getItem('checkout_buyer_name') || '';
+    const shippingOption = sessionStorage.getItem('checkout_shipping_option') || '';
+    const shippingAddress = JSON.parse(sessionStorage.getItem('checkout_shipping_address') || '{}');
+
+    await fetch('/api/lulu/create-print-job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quantity, buyer_email: buyerEmail, buyer_name: buyerName,
+        shipping_address: shippingAddress, shipping_option: shippingOption,
+        paypal_order_id: paypalOrderId,
+      }),
+    });
+
+    ['checkout_quantity','checkout_buyer_email','checkout_buyer_name','checkout_shipping_option','checkout_shipping_address'].forEach(k => sessionStorage.removeItem(k));
+    window.location.href = '/checkout/confirmation.html?order=' + encodeURIComponent(paypalOrderId);
+  } catch (err) {
+    alert('Error al procesar el pago: ' + err.message + '. Contactanos a pablo@irreductible.site con tu PayPal Order ID: ' + paypalOrderId);
+  }
+}
+
+if (new URLSearchParams(window.location.search).get('capture') === '1') {
+  handleCaptureReturn();
+}
 </script>
 
 </body>
