@@ -518,7 +518,7 @@ function renderPayPalButton() {
         const shippingOption = getField('shipping_option').value;
         const shippingAddress = buildAddress();
 
-        await fetch('/api/lulu/create-print-job', {
+        const printRes = await fetch('/api/lulu/create-print-job', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -527,6 +527,10 @@ function renderPayPalButton() {
             paypal_order_id: data.orderID,
           }),
         });
+        if (!printRes.ok) {
+          const err = await printRes.json().catch(() => ({}));
+          throw new Error(err.error || 'Error al crear la orden de impresión');
+        }
 
         window.location.href = '/checkout/confirmation.html?order=' + encodeURIComponent(data.orderID);
       } catch (err) {
