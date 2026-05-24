@@ -166,6 +166,11 @@ tailwind.config = {
         <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 555 000 0000"/>
         <span class="error-msg">Requerido</span>
       </div>
+      <div class="form-group">
+        <label for="tax_id" id="tax_id_label">Tax ID (opcional)</label>
+        <input id="tax_id" name="tax_id" type="text" autocomplete="off" placeholder=""/>
+        <span class="error-msg" id="tax_id_error">Requerido para este país</span>
+      </div>
     </div>
   </fieldset>
 
@@ -263,6 +268,16 @@ function validate() {
     const err = validateField(name, el.value);
     if (err) { showError(el, err); errors.push({ field: name, error: err }); }
   }
+  // Tax ID: obligatorio solo para CL, BR, MX, AR, PE
+  const country = getField('country').value;
+  if (TAX_ID_REQUIRED.includes(country)) {
+    const taxEl = getField('tax_id');
+    if (taxEl && !taxEl.value.trim()) {
+      const label = TAX_ID_LABELS[country] || 'Tax ID';
+      showError(taxEl, label + ' es requerido para este país');
+      errors.push({ field: 'tax_id', error: label + ' requerido' });
+    }
+  }
   // Quantity is not in REQUIRED but needs validation
   const qtyEl = getField('quantity');
   if (qtyEl) {
@@ -294,6 +309,7 @@ const SHIPPING_MOCK = {
 
 countrySelect.addEventListener('change', function() {
   const code = this.value;
+  updateTaxIdLabel();
   shippingSelect.innerHTML = '<option value="">Seleccionar método…</option>';
   shippingSelect.disabled = true;
   shippingUnavailable.classList.add('hidden');
@@ -387,6 +403,22 @@ getField('quantity').addEventListener('change', function() {
 
 // ── Submit handler ─────────────────────────────────────────────
 
+// ── Tax ID ────────────────────────────────────────────────────
+const TAX_ID_LABELS = { CL:'RUT', BR:'CPF', MX:'RFC/CURP', AR:'CUIL', PE:'RUC' };
+const TAX_ID_REQUIRED = ['CL','BR','MX','AR','PE'];
+
+function updateTaxIdLabel() {
+  const country = countrySelect.value;
+  const label = document.getElementById('tax_id_label');
+  const isRequired = TAX_ID_REQUIRED.includes(country);
+  const countryLabel = TAX_ID_LABELS[country] || 'Tax ID';
+  label.innerHTML = isRequired
+    ? countryLabel + ' <span class=\"text-error font-normal\">— requerido</span>'
+    : countryLabel + ' <span class=\"text-outline font-normal\">— opcional</span>';
+  document.getElementById('tax_id').placeholder = isRequired ? countryLabel : '';
+  document.getElementById('tax_id_error').textContent = countryLabel + ' es requerido para este país';
+}
+
 function buildAddress() {
   return {
     name: getField('buyer_name').value.trim(),
@@ -397,6 +429,7 @@ function buildAddress() {
     country: getField('country').value,
     postal_code: getField('postal_code').value.trim(),
     phone: getField('phone').value.trim(),
+    tax_id: getField('tax_id').value.trim() || undefined,
   };
 }
 
