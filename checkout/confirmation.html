@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Confirmación | IRREDUCTIBLE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: { extend: {
+    colors: { "surface":"#131313","background":"#0a0a0a","primary":"#b8922a","on-surface":"#e5e2e1","on-surface-variant":"#d1c5b0","outline-variant":"#4e4636","secondary":"#98ccf6","steel-blue":"#4a7fa5","surface-container-low":"#1c1b1b","surface-container-high":"#2a2a2a" },
+    borderRadius: { "DEFAULT":"0" },
+    fontFamily: { "headline":["Bebas Neue"],"body":["Inter"],"mono":["JetBrains Mono"] }
+  }}
+}
+</script>
+<style>
+  body { background:#0a0a0a; color:#e5e2e1; -webkit-font-smoothing:antialiased; font-family:'Inter',sans-serif; }
+  .card { border:1px solid rgba(74,127,165,0.25); padding:24px; position:relative; background:rgba(28,27,27,0.5); margin-bottom:24px; }
+  .card::before, .card::after { content:''; position:absolute; width:24px; height:24px; opacity:0.3; }
+  .card::before { border-top:2px solid #4a7fa5; border-left:2px solid #4a7fa5; top:0; left:0; }
+  .card::after { border-bottom:2px solid #4a7fa5; border-right:2px solid #4a7fa5; bottom:0; right:0; }
+  .row { display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(78,70,54,0.3); }
+  .row .lbl { color:#d1c5b0; }
+  .badge { display:inline-block; padding:4px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; }
+  .badge.ok { background:rgba(184,146,42,0.15); color:#b8922a; }
+  .badge.wait { background:rgba(74,127,165,0.15); color:#98ccf6; }
+  .sk { background:linear-gradient(90deg,#1c1b1b 0%,#2a2a2a 50%,#1c1b1b 100%); background-size:200% 100%; animation:sh 1.5s infinite; border-radius:2px; }
+  @keyframes sh { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  a { color:#98ccf6; }
+</style>
+</head>
+<body>
+
+<header class="fixed top-0 w-full z-50 px-4 md:px-16 py-4 flex justify-between items-center border-b border-outline-variant/30" style="background:rgba(19,19,19,0.9);backdrop-filter:blur(12px);">
+  <a href="/libro.html" class="no-underline text-on-surface tracking-widest" style="font-family:'Bebas Neue',sans-serif; font-size:1.5rem;">IRREDUCTIBLE</a>
+  <span class="hidden md:block font-mono text-steel-blue tracking-[0.2em]" style="font-size:10px;">CONFIRMACIÓN</span>
+</header>
+
+<main class="pt-28 pb-20 px-4 md:px-16 max-w-2xl mx-auto" id="main">
+</main>
+
+<footer class="border-t border-outline-variant/30 px-4 md:px-16 py-8 text-center">
+  <p class="font-mono text-outline-variant" style="font-size:10px;">IRREDUCTIBLE © 2025 Pablo Bravo · Impresión y envío por Lulu</p>
+</footer>
+
+<script>
+const API = '/api/orders';
+
+const T = {
+  loading: '<div class="card"><div class="sk" style="height:32px;width:60%;margin-bottom:16px;"></div><div class="sk" style="height:14px;width:100%;margin-bottom:8px;"></div><div class="sk" style="height:14px;width:75%;margin-bottom:8px;"></div><div class="sk" style="height:14px;width:50%;"></div></div>',
+  notFound: '<div class="card"><h1 style="font-family:\'Bebas Neue\',sans-serif;font-size:clamp(28px,4vw,40px);line-height:0.95;margin-bottom:16px;">Orden no encontrada</h1><p class="text-on-surface-variant" style="font-size:14px;margin-bottom:24px;">No se encontró una orden con ese identificador. Si creés que es un error, contactanos en <a href="mailto:pablo@irreductible.site">pablo@irreductible.site</a>.</p><a href="/libro.html">← Volver al libro</a></div>',
+  error: '<div class="card"><h1 style="font-family:\'Bebas Neue\',sans-serif;font-size:clamp(28px,4vw,40px);line-height:0.95;margin-bottom:16px;">Error</h1><p class="text-on-surface-variant" style="font-size:14px;margin-bottom:24px;">No pudimos consultar tu orden. Recargá la página o contactanos en <a href="mailto:pablo@irreductible.site">pablo@irreductible.site</a>.</p><a href="javascript:location.reload()">⟳ Reintentar</a></div>'
+};
+
+function renderLoading() { document.getElementById('main').innerHTML = T.loading; }
+
+function renderNotFound() { document.getElementById('main').innerHTML = T.notFound; }
+
+function renderError() { document.getElementById('main').innerHTML = T.error; }
+
+function renderOrder(order) {
+  const shipped = order.status === 'shipped';
+  const title = shipped ? 'Libro despachado' : 'Compra confirmada';
+  const badgeHtml = shipped
+    ? '<span class="badge ok">En camino</span>'
+    : '<span class="badge wait">En producción</span>';
+
+  const trackingHtml = shipped ? `
+    <div class="card">
+      <h2 class="font-mono text-primary mb-4" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Seguimiento</h2>
+      <div class="row"><span class="lbl">Transportista</span><span>${esc(order.carrier) || '—'}</span></div>
+      <div class="row"><span class="lbl">Número</span><span style="font-family:'JetBrains Mono',monospace;">${esc(order.tracking_number) || '—'}</span></div>
+      ${order.tracking_url ? `<div style="margin-top:16px;"><a href="${esc(order.tracking_url)}" target="_blank" rel="noopener" style="text-decoration:underline;">Ver seguimiento del envío →</a></div>` : ''}
+    </div>` : '';
+
+  document.getElementById('main').innerHTML = `
+    <div class="card">
+      <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,40px);line-height:0.95;margin-bottom:8px;">${title}</h1>
+      ${badgeHtml}
+    </div>
+    <div class="card">
+      <h2 class="font-mono text-primary mb-4" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">Resumen de la orden</h2>
+      <div class="row"><span class="lbl">Comprador</span><span>${esc(order.buyer_name)}</span></div>
+      <div class="row"><span class="lbl">Email</span><span>${esc(order.buyer_email)}</span></div>
+      <div class="row"><span class="lbl">Cantidad</span><span>${order.quantity || '—'}</span></div>
+      <div class="row"><span class="lbl">Total</span><span style="color:#b8922a;font-weight:bold;">USD $${order.total_usd || '—'}</span></div>
+      <div class="row"><span class="lbl">Fecha</span><span>${fmt(order.created_at)}</span></div>
+    </div>
+    ${trackingHtml}
+    <div style="text-align:center;margin-top:32px;"><a href="/libro.html">← Volver al libro</a></div>`;
+
+  if (!shipped && ['paid','print_submitted','in_production'].includes(order.status)) {
+    setTimeout(() => loadOrder(paypalOrderId), 60000);
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('es-AR', { year:'numeric', month:'short', day:'numeric' });
+}
+
+let paypalOrderId = null;
+
+async function loadOrder(id) {
+  renderLoading();
+  try {
+    const res = await fetch(`${API}?paypal_order_id=${encodeURIComponent(id)}`);
+    if (!res.ok) { res.status === 404 ? renderNotFound() : renderError(); return; }
+    const data = await res.json();
+    renderOrder(data.order);
+  } catch { renderError(); }
+}
+
+const params = new URLSearchParams(window.location.search);
+paypalOrderId = params.get('order');
+
+if (!paypalOrderId) { renderNotFound(); }
+else { loadOrder(paypalOrderId); }
+</script>
+
+</body>
+</html>

@@ -22,6 +22,9 @@
     "checkout_paypal_capture_api": true,
     "checkout_lulu_print_api": true,
     "checkout_db_orders": true,
-    "checkout_emails": true
+    "checkout_emails": true,
+    "checkout_lulu_webhook": false,
+    "checkout_orders_api": false,
+    "checkout_confirmation_page": false
   }
 }
