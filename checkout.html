@@ -197,7 +197,6 @@ tailwind.config = {
     <div class="hud-bracket-br opacity-30"></div>
     <legend class="font-label-caps text-primary px-2">05 // RESUMEN</legend>
     <div class="cost-line"><span>Impresión (×<span id="cost-qty">1</span>)</span><span id="cost-printing">—</span></div>
-    <div class="cost-line"><span>Fulfillment</span><span id="cost-fulfillment">—</span></div>
     <div class="cost-line"><span>Envío</span><span id="cost-shipping">—</span></div>
     <div class="cost-line total"><span>Total</span><span id="cost-total">—</span></div>
     <p id="cost-status" class="font-data-mono text-[10px] text-outline mt-4"></p>
@@ -337,7 +336,6 @@ function resetCosts() {
   costBreakdown = null;
   document.getElementById('cost-qty').textContent = getField('quantity').value || '1';
   document.getElementById('cost-printing').textContent = '—';
-  document.getElementById('cost-fulfillment').textContent = '—';
   document.getElementById('cost-shipping').textContent = '—';
   document.getElementById('cost-total').textContent = '—';
   document.getElementById('cost-status').textContent = '';
@@ -371,7 +369,6 @@ async function calculateCosts() {
 
     document.getElementById('cost-qty').textContent = costBreakdown.quantity;
     document.getElementById('cost-printing').textContent = `USD $${costBreakdown.printing_total_usd.toFixed(2)}`;
-    document.getElementById('cost-fulfillment').textContent = `USD $${costBreakdown.fulfillment_fee_usd.toFixed(2)}`;
     document.getElementById('cost-shipping').textContent = `USD $${costBreakdown.shipping_usd.toFixed(2)}`;
     document.getElementById('cost-total').textContent = `USD $${costBreakdown.total_usd.toFixed(2)}`;
     document.getElementById('cost-status').textContent = '';
