@@ -569,41 +569,39 @@ function initCardFields() {
 
   console.log('[paypal] CardFields creado, isEligible:', cardFieldsInstance.isEligible());
 
-  if (cardFieldsInstance.isEligible()) {
-    cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
-    cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
-    cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
-    cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
-    console.log('[paypal] campos renderizados');
+  cardFieldsInstance.NameField({ placeholder: 'Nombre en la tarjeta' }).render('#card-name-field-container');
+  cardFieldsInstance.NumberField({ placeholder: 'Número de tarjeta' }).render('#card-number-field-container');
+  cardFieldsInstance.ExpiryField({ placeholder: 'MM/AA' }).render('#card-expiry-field-container');
+  cardFieldsInstance.CVVField({ placeholder: 'CVV' }).render('#card-cvv-field-container');
+  console.log('[paypal] campos renderizados (isEligible ignorado en sandbox)');
 
-    // Conectar botón de pago con cardFields.submit()
-    btnCardPay.addEventListener('click', function() {
-      hideCardError();
-      btnCardPay.disabled = true;
-      btnCardPay.textContent = 'Procesando…';
-      document.getElementById('cost-status').textContent = 'Verificando tarjeta…';
+  // Conectar botón de pago con cardFields.submit()
+  btnCardPay.addEventListener('click', function() {
+    hideCardError();
+    btnCardPay.disabled = true;
+    btnCardPay.textContent = 'Procesando…';
+    document.getElementById('cost-status').textContent = 'Verificando tarjeta…';
 
-      const addr = buildAddress();
-      cardFieldsInstance.submit({
-        cardholderName: getField('buyer_name').value.trim(),
-        billingAddress: {
-          addressLine1: addr.line1 || '',
-          addressLine2: addr.line2 || '',
-          adminArea1: addr.state || '',
-          adminArea2: addr.city || '',
-          countryCode: addr.country || '',
-          postalCode: addr.postal_code || '',
-        },
-      }).catch(function(err) {
-        console.error('[paypal] submit error:', err);
-        showCardError('Error al procesar la tarjeta. Verificá los datos e intentá de nuevo.');
-        btnCardPay.disabled = false;
-        btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
-        document.getElementById('cost-status').textContent = '';
-      });
-    }, { once: true });
-    console.log('[paypal] event listener agregado a btnCardPay');
-  }
+    const addr = buildAddress();
+    cardFieldsInstance.submit({
+      cardholderName: getField('buyer_name').value.trim(),
+      billingAddress: {
+        addressLine1: addr.line1 || '',
+        addressLine2: addr.line2 || '',
+        adminArea1: addr.state || '',
+        adminArea2: addr.city || '',
+        countryCode: addr.country || '',
+        postalCode: addr.postal_code || '',
+      },
+    }).catch(function(err) {
+      console.error('[paypal] submit error:', err);
+      showCardError('Error al procesar la tarjeta. Verificá los datos e intentá de nuevo.');
+      btnCardPay.disabled = false;
+      btnCardPay.textContent = 'Pagar USD $' + (costBreakdown ? costBreakdown.total_usd.toFixed(2) : '—');
+      document.getElementById('cost-status').textContent = '';
+    });
+  }, { once: true });
+  console.log('[paypal] event listener agregado a btnCardPay');
 }
 
 // Inicializar Card Fields cuando se muestra la sección de pago
