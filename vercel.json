@@ -1,5 +1,12 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/lulu/calculate", "destination": "/api/lulu?action=calculate" },
+    { "source": "/api/lulu/create-print-job", "destination": "/api/lulu?action=create-print-job" },
+    { "source": "/api/lulu/webhook", "destination": "/api/lulu?action=webhook" },
+    { "source": "/api/paypal/create-order", "destination": "/api/paypal?action=create-order" },
+    { "source": "/api/paypal/capture-order", "destination": "/api/paypal?action=capture-order" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
