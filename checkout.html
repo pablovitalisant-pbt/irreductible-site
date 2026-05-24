@@ -195,10 +195,10 @@ tailwind.config = {
     <div class="cost-line"><span>Fulfillment</span><span id="cost-fulfillment">—</span></div>
     <div class="cost-line"><span>Envío</span><span id="cost-shipping">—</span></div>
     <div class="cost-line total"><span>Total</span><span id="cost-total">—</span></div>
-    <p id="cost-status" class="font-data-mono text-[10px] text-outline mt-4">Los costos exactos se calculan en tiempo real al seleccionar país y método de envío.</p>
+    <p id="cost-status" class="font-data-mono text-[10px] text-outline mt-4"></p>
   </fieldset>
 
-  <button type="submit" id="btn-submit" class="btn-primary">Verificar y proceder al pago</button>
+  <button type="submit" id="btn-submit" class="btn-primary hidden">Verificar y proceder al pago</button>
 
   <div id="paypal-section" class="hidden mt-4">
     <button type="button" id="btn-paypal" class="btn-primary" style="background:#ffc439;color:#111;">
@@ -223,7 +223,6 @@ const form = document.getElementById('checkout-form');
 const countrySelect = document.getElementById('country');
 const shippingSelect = document.getElementById('shipping_option');
 const shippingUnavailable = document.getElementById('shipping-unavailable');
-const submitBtn = form.querySelector('button[type="submit"]');
 
 const REQUIRED = ['buyer_name','buyer_email','address_line1','city','country','postal_code','phone','shipping_option'];
 
@@ -308,12 +307,82 @@ countrySelect.addEventListener('change', function() {
   shippingSelect.disabled = false;
 });
 
-// ── Submit handler ─────────────────────────────────────────────
+// ── Auto-calcular costos al cambiar país, envío o cantidad ──────
 const btnSubmit = document.getElementById('btn-submit');
 const btnPaypal = document.getElementById('btn-paypal');
 const paypalSection = document.getElementById('paypal-section');
-let submitting = false;
 let costBreakdown = null;
+let calculating = false;
+
+function resetCosts() {
+  costBreakdown = null;
+  document.getElementById('cost-qty').textContent = getField('quantity').value || '1';
+  document.getElementById('cost-printing').textContent = '—';
+  document.getElementById('cost-fulfillment').textContent = '—';
+  document.getElementById('cost-shipping').textContent = '—';
+  document.getElementById('cost-total').textContent = '—';
+  document.getElementById('cost-status').textContent = '';
+  btnSubmit.classList.add('hidden');
+  paypalSection.classList.add('hidden');
+}
+
+async function calculateCosts() {
+  const country = countrySelect.value;
+  const shipping = shippingSelect.value;
+  const quantity = parseInt(getField('quantity').value, 10);
+  if (!country || !shipping) return;
+  if (calculating) return;
+  calculating = true;
+  document.getElementById('cost-status').textContent = 'Calculando…';
+  paypalSection.classList.add('hidden');
+  btnSubmit.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/lulu/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country, shipping_option: shipping, quantity }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al calcular costos');
+    }
+    const data = await res.json();
+    costBreakdown = data.breakdown;
+
+    document.getElementById('cost-qty').textContent = costBreakdown.quantity;
+    document.getElementById('cost-printing').textContent = `USD $${costBreakdown.printing_total_usd.toFixed(2)}`;
+    document.getElementById('cost-fulfillment').textContent = `USD $${costBreakdown.fulfillment_fee_usd.toFixed(2)}`;
+    document.getElementById('cost-shipping').textContent = `USD $${costBreakdown.shipping_usd.toFixed(2)}`;
+    document.getElementById('cost-total').textContent = `USD $${costBreakdown.total_usd.toFixed(2)}`;
+    document.getElementById('cost-status').textContent = '';
+
+    btnSubmit.classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('cost-status').textContent = 'Error: ' + err.message;
+    costBreakdown = null;
+  } finally {
+    calculating = false;
+  }
+}
+
+countrySelect.addEventListener('change', function() {
+  // La población de shipping options ya se ejecutó en el listener anterior
+  // Disparamos después de un microtask para que el DOM de shipping esté listo
+  setTimeout(() => {
+    if (shippingSelect.value) calculateCosts(); else resetCosts();
+  }, 0);
+});
+
+shippingSelect.addEventListener('change', function() {
+  if (this.value) calculateCosts(); else resetCosts();
+});
+
+getField('quantity').addEventListener('change', function() {
+  if (costBreakdown) calculateCosts();
+});
+
+// ── Submit handler ─────────────────────────────────────────────
 
 function buildAddress() {
   return {
@@ -328,52 +397,24 @@ function buildAddress() {
   };
 }
 
-form.addEventListener('submit', async function(e) {
+form.addEventListener('submit', function(e) {
   e.preventDefault();
-  if (submitting) return;
   const errors = validate();
   if (errors.length > 0) {
     errors[0].field && getField(errors[0].field)?.focus();
     return;
   }
-  submitting = true;
-  btnSubmit.disabled = true;
-  btnSubmit.textContent = 'Calculando costos…';
-
-  const payload = {
-    country: getField('country').value,
-    shipping_option: getField('shipping_option').value,
-    quantity: parseInt(getField('quantity').value, 10),
-  };
-
-  try {
-    const res = await fetch('/api/lulu/calculate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+  if (!costBreakdown) {
+    calculateCosts().then(() => {
+      if (costBreakdown) {
+        btnSubmit.classList.add('hidden');
+        paypalSection.classList.remove('hidden');
+      }
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Error al calcular costos');
-    }
-    const data = await res.json();
-    costBreakdown = data.breakdown;
-
-    document.getElementById('cost-qty').textContent = costBreakdown.quantity;
-    document.getElementById('cost-printing').textContent = `USD $${costBreakdown.printing_total_usd.toFixed(2)}`;
-    document.getElementById('cost-fulfillment').textContent = `USD $${costBreakdown.fulfillment_fee_usd.toFixed(2)}`;
-    document.getElementById('cost-shipping').textContent = `USD $${costBreakdown.shipping_usd.toFixed(2)}`;
-    document.getElementById('cost-total').textContent = `USD $${costBreakdown.total_usd.toFixed(2)}`;
-    document.getElementById('cost-status').textContent = 'Costos calculados en tiempo real vía Lulu API.';
-
-    btnSubmit.classList.add('hidden');
-    paypalSection.classList.remove('hidden');
-  } catch (err) {
-    document.getElementById('cost-status').textContent = 'Error: ' + err.message;
-    btnSubmit.disabled = false;
-    btnSubmit.textContent = 'Reintentar';
-    submitting = false;
+    return;
   }
+  btnSubmit.classList.add('hidden');
+  paypalSection.classList.remove('hidden');
 });
 
 // ── PayPal button ───────────────────────────────────────────────
