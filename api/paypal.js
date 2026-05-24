@@ -30,7 +30,7 @@ async function handleCreateOrder(req, res) {
   if (!buyer_name || buyer_name.trim().length < 2) return res.status(400).json({ error: 'buyer_name es requerido' });
   if (!breakdown || typeof breakdown !== 'object') return res.status(400).json({ error: 'breakdown es requerido' });
   try {
-    const result = await createOrder({ total_usd, breakdown, buyer_email, buyer_name: buyer_name.trim(), return_url, cancel_url });
+    const result = await createOrder({ total_usd, breakdown, buyer_email, buyer_name: buyer_name.trim(), return_url, cancel_url, shipping_address });
     try {
       const sql = getSql();
       await sql`
